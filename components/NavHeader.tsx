@@ -10,10 +10,10 @@ export function NavHeader({ current }: { current: "chat" | "saved" | "profile" |
   const { key } = useUserAvatar();
 
   return (
-    <header className="flex items-center justify-between border-b border-brass px-5 py-4">
+    <header className="sticky top-0 z-40 flex items-center justify-between border-b border-brass bg-porcelain px-5 py-4">
       <div className="flex items-center gap-3">
         <Sidebar current={current} />
-        <h1 className="font-display text-title text-espresso">Outfit Me</h1>
+        <h1 className="font-display text-title text-espresso">OutFit Me</h1>
       </div>
       {current !== "profile" && (
         <Link

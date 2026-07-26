@@ -46,9 +46,6 @@ export default function ProfilePage() {
         <div className="flex flex-col items-center gap-3 text-center">
           <Avatar src={getUserAvatar(userKey).src} size={72} label="Your current avatar" />
           <h2 className="font-display text-title text-espresso">Your avatar</h2>
-          <p className="max-w-xs font-body text-body text-espresso">
-            There&apos;s no photo upload here, pick a character to stand in for you in chat instead.
-          </p>
         </div>
 
         <div role="radiogroup" aria-label="Avatar options" className="grid grid-cols-4 gap-3">

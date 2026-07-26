@@ -21,7 +21,7 @@ const outfitUtility = OutfitUtilityFont({
 });
 
 export const metadata: Metadata = {
-  title: "Outfit Me",
+  title: "OutFit Me",
   description: "Concrete outfit ideas for any occasion, grounded in real fashion inspiration.",
 };
 

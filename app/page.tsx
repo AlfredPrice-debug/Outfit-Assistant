@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { NavHeader } from "@/components/NavHeader";
 import { ChatInput, type PendingImage } from "@/components/ChatInput";
-import { ExampleChips } from "@/components/ExampleChips";
 import { OutfitCard, type OutfitWithId } from "@/components/OutfitCard";
 import { Avatar } from "@/components/Avatar";
 import { MessageActions } from "@/components/MessageActions";
@@ -62,6 +61,7 @@ export default function ChatPage() {
   const userAvatarSrc = getUserAvatar(userAvatarKey).src;
   const { key: assistantAvatarKey } = useAssistantAvatar();
   const assistantAvatarSrc = getAssistantAvatar(assistantAvatarKey).src;
+  const assistantThinkingAvatarSrc = getAssistantAvatar(assistantAvatarKey).thinkingSrc;
 
   useEffect(() => {
     if (!pending || pending.retrying) return;
@@ -222,7 +222,6 @@ export default function ChatPage() {
                 I&apos;ll get you started with three looks.
               </p>
             </div>
-            <ExampleChips onPick={sendMessage} />
           </div>
         )}
 
@@ -240,7 +239,7 @@ export default function ChatPage() {
                         className="h-24 w-24 rounded-card border border-brass object-cover"
                       />
                     )}
-                    <div className="rounded-card bg-amber px-4 py-3 font-body text-body text-espresso">
+                    <div className="rounded-card bg-amber px-4 py-3 font-body text-body text-espresso shadow-card">
                       {message.content}
                     </div>
                   </div>
@@ -266,7 +265,7 @@ export default function ChatPage() {
                   <Avatar src={assistantAvatarSrc} label="Outfit MC" />
                   <div
                     role="alert"
-                    className="max-w-[85%] rounded-card border border-brass bg-butter px-4 py-3 font-body text-body text-espresso"
+                    className="max-w-[85%] rounded-card border border-brass bg-butter px-4 py-3 font-body text-body text-espresso shadow-card"
                   >
                     {message.content}
                   </div>
@@ -284,8 +283,8 @@ export default function ChatPage() {
 
           {pending && (
             <li aria-live="polite" className="flex flex-col gap-3">
-              <Avatar src={assistantAvatarSrc} label="Outfit MC" />
-              <div className="max-w-[85%] rounded-card border border-brass bg-butter px-4 py-3 font-body text-body text-espresso">
+              <Avatar src={assistantThinkingAvatarSrc} label="Outfit MC" />
+              <div className="max-w-[85%] rounded-card border border-brass bg-butter px-4 py-3 font-body text-body text-espresso shadow-card">
                 {pending.retrying
                   ? "That didn't come back quite right, trying again…"
                   : THINKING_MESSAGES[thinkingIndex]}

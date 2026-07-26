@@ -13,18 +13,51 @@ export interface AssistantAvatarOption {
   key: AssistantAvatarKey;
   label: string;
   src: string;
+  // A matching "thinking" pose from the same look, shown while she's
+  // generating outfits instead of reusing her normal expression.
+  thinkingSrc: string;
 }
 
-// Outfit MC, the assistant's persona. The user picks one headshot to
-// represent her everywhere she appears (empty state, chat bubbles, the
-// thinking indicator) rather than the app assigning a pose per state.
+// Outfit MC, the assistant's persona. The user picks one look; its matching
+// thinking pose comes along with it automatically rather than being a
+// separate choice.
 export const ASSISTANT_AVATARS: AssistantAvatarOption[] = [
-  { key: "blazer", label: "Blazer", src: "/avatars/outfitmc_blazer.png" },
-  { key: "tablet", label: "Tablet", src: "/avatars/outfitmc_tablet.png" },
-  { key: "thumbsup_red", label: "Red Blouse", src: "/avatars/outfitmc_thumbsup_red.png" },
-  { key: "turtleneck", label: "Turtleneck", src: "/avatars/outfitmc_turtleneck.png" },
-  { key: "leather_phone", label: "Leather Jacket", src: "/avatars/outfitmc_leather_phone.png" },
-  { key: "leopard_thumbsup", label: "Leopard Print", src: "/avatars/outfitmc_leopard_thumbsup.png" },
+  {
+    key: "blazer",
+    label: "Blazer",
+    src: "/avatars/outfitmc_blazer.png",
+    thinkingSrc: "/avatars/outfitmc_blazer_thinking.png",
+  },
+  {
+    key: "tablet",
+    label: "Tablet",
+    src: "/avatars/outfitmc_tablet.png",
+    thinkingSrc: "/avatars/outfitmc_tablet_thinking.png",
+  },
+  {
+    key: "thumbsup_red",
+    label: "Red Blouse",
+    src: "/avatars/outfitmc_thumbsup_red.png",
+    thinkingSrc: "/avatars/outfitmc_thumbsup_red_thinking.png",
+  },
+  {
+    key: "turtleneck",
+    label: "Turtleneck",
+    src: "/avatars/outfitmc_turtleneck.png",
+    thinkingSrc: "/avatars/outfitmc_turtleneck_thinking.png",
+  },
+  {
+    key: "leather_phone",
+    label: "Leather Jacket",
+    src: "/avatars/outfitmc_leather_phone.png",
+    thinkingSrc: "/avatars/outfitmc_leather_phone_thinking.png",
+  },
+  {
+    key: "leopard_thumbsup",
+    label: "Leopard Print",
+    src: "/avatars/outfitmc_leopard_thumbsup.png",
+    thinkingSrc: "/avatars/outfitmc_leopard_thumbsup_thinking.png",
+  },
 ];
 
 export const DEFAULT_ASSISTANT_AVATAR_KEY: AssistantAvatarKey = "blazer";

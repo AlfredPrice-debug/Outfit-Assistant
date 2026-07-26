@@ -15,7 +15,7 @@ export function Avatar({
       alt={label}
       width={size}
       height={size}
-      className="shrink-0 rounded-full border border-brass object-cover"
+      className="shrink-0 rounded-full object-cover"
       style={{ width: size, height: size }}
     />
   );

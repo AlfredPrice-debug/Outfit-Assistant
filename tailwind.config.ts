@@ -38,7 +38,8 @@ const config: Config = {
         small: "12px",
       },
       boxShadow: {
-        // The one soft shadow the design allows, reserved for outfit cards.
+        // The one soft shadow the design allows: outfit cards and chat
+        // message bubbles, giving each a slight raised, shaded feel.
         card: "0 4px 16px rgba(42, 33, 28, 0.10)",
       },
       maxWidth: {

@@ -1,4 +1,4 @@
-# Outfit Me
+# OutFit Me
 
 A single-user web app that turns a plain-language request — "summer outfit
 ideas for a coffee date" — into three concrete, wearable outfit suggestions,
@@ -17,10 +17,9 @@ results so the inspiration links are real pages, not invented URLs. See
   of a garment attached — and get three outfit cards back, streamed in as
   they generate.
 - **Outfit cards.** Each opens with a color story bar (the outfit's actual
-  garment colors), a small icon grid giving each layer (top/bottom/outerwear/
-  shoes) a scannable visual, then the title, items grouped by layer,
-  a short rationale, and up to two inspiration links styled as buttons that
-  open in a new tab.
+  garment colors), then the title, items grouped by layer as text, a short
+  rationale, and up to two inspiration links styled as buttons that open in
+  a new tab.
 - **Photo input.** Attach a photo of a piece you own (via the image icon in
   the chat input) and Gemini builds at least one outfit around it. The photo
   is compressed client-side and sent for that one request only — it's never
@@ -60,8 +59,8 @@ results so the inspiration links are real pages, not invented URLs. See
    ```bash
    npm run dev
    ```
-5. Open `http://localhost:3000`, enter your `APP_PASSCODE`, and try one of
-   the example prompts.
+5. Open `http://localhost:3000`, enter your `APP_PASSCODE`, and describe an
+   occasion to Outfit MC.
 
 ## Environment variables
 
@@ -162,11 +161,11 @@ anywhere in the app:
 
 - **`USER_AVATARS`**: 18 illustrated character icons standing in for the
   human user, who has no profile photo in this app.
-- **`ASSISTANT_AVATARS`**: 6 headshots of Outfit MC, the assistant's persona.
-  Unlike the old fixed two-pose avatar (a calm pose for replies, a distinct
-  "thinking" pose while generating) this is a single chosen headshot reused
-  everywhere she appears, since the six options are stylistic variety rather
-  than distinct states.
+- **`ASSISTANT_AVATARS`**: 6 looks for Outfit MC, the assistant's persona.
+  Each option is really a pair: a normal `src` and a matching `thinkingSrc`
+  cropped from a second sheet of the same look in a "thinking" pose. Picking
+  a look picks both at once, so the pending/thinking indicator always shows
+  the correct pose for whichever look is active, not a mismatched one.
 
 Both choices are stored in `localStorage`, not the database. There's no
 `User` model to attach either to, and they're cosmetic enough not to need
@@ -186,35 +185,11 @@ silently reintroduce this. Self-hosted `next/image` also requires the
 must survive a production-only install) or every optimized image silently
 fails the same way.
 
-## Clothing icons
-
-Outfit cards show a small icon per layer (top/bottom/outerwear/shoes)
-alongside the text description. `lib/clothingIcons.ts` holds a curated ~30
-icons (cropped from a much larger sheet the user provided) tagged with a
-category and keywords, and `matchClothingIcon()` does a keyword-overlap match
-against Gemini's generic item text (e.g. "white linen button-down" →
-a button-down icon). It's best-effort: a wrong or missing match just omits
-the icon rather than showing something misleading — the text description
-next to it stays the authoritative detail either way. Free-form
-`accessories` strings aren't matched at all; they're open-ended text with no
-fixed icon set to match against.
-
-The first version of these icon PNGs (and the avatar PNGs) had a checkerboard
-baked into their pixels instead of a real alpha channel — the same problem
-across every sprite sheet up to that point, worked around by tight cropping
-alone. The user later provided re-exports with a flat, uniform background
-(solid white behind the clothing icons, a solid light-gray disc behind each
-avatar) instead of a checkerboard. A flat, consistent background color makes
-a real chroma-key safe where it wasn't before: every icon and avatar is
-reprocessed with actual alpha transparency (any near-white pixel → fully
-transparent), which is why the checker texture is gone — not just hidden by
-tight cropping.
-
 ## Sidebar and new chat
 
 `components/Sidebar.tsx` is a slide-out drawer, toggled by the hamburger
-button in the header, present on every page. It holds the app's real
-navigation: "Start new chat", "Profile", and "Saved outfits". Starting a new
+button in the sticky header, present on every page. It holds the app's real
+navigation: "Start new chat", "Profile", and "Chat history". Starting a new
 chat calls `POST /api/conversations`, which archives the current
 `Conversation` row and creates a new one (see [Data model](#data-model)),
 then does a full page navigation back to `/` — a plain client-side route
