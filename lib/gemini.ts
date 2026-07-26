@@ -85,6 +85,29 @@ function extractJson(rawText: string): unknown {
   return JSON.parse(rawText.slice(start, end + 1));
 }
 
+// Google's API error message is a JSON string, and the useful part
+// ("RESOURCE_EXHAUSTED: <which quota, and why>") is sometimes nested a level
+// deeper inside its own .error.message field. Unwrapping this turns "rate
+// limit or quota reached" into an actual diagnosis (which quota, free tier
+// vs billing) instead of a guess.
+function extractGoogleErrorDetail(rawMessage: string): string | null {
+  const unwrap = (value: unknown): { message?: string; status?: string } | null => {
+    if (typeof value !== "string") return null;
+    try {
+      const parsed = JSON.parse(value);
+      return parsed?.error ?? parsed ?? null;
+    } catch {
+      return null;
+    }
+  };
+
+  const level1 = unwrap(rawMessage);
+  if (!level1?.message) return null;
+  const level2 = unwrap(level1.message);
+  const final = level2 ?? level1;
+  return final.message ? (final.status ? `${final.status}: ${final.message}` : final.message) : null;
+}
+
 // Grounding chunk URIs point at Google's grounding redirect service rather
 // than the publisher's own URL — that's a known characteristic of Search
 // grounding (see DEPLOY.md / README), not a bug here. They still resolve to a
@@ -176,7 +199,12 @@ async function callGeminiOnce(
         throw new GeminiConfigError();
       }
       if (err.status === 429) {
-        throw new GeminiRateLimitError();
+        const detail = extractGoogleErrorDetail(err.message);
+        throw new GeminiRateLimitError(
+          detail
+            ? `Gemini's rate limit or quota was reached: ${detail}`
+            : undefined,
+        );
       }
     }
     throw err;
