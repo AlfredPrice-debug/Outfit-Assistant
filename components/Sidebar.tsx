@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { MenuIcon, XIcon, PlusIcon, MessageCircleIcon, UserIcon, HistoryIcon } from "lucide-react";
+import { MenuIcon, XIcon, PlusIcon, MessageCircleIcon, UserIcon, HistoryIcon, ShirtIcon } from "lucide-react";
 
-export function Sidebar({ current }: { current: "chat" | "saved" | "profile" | "history" }) {
+export function Sidebar({ current }: { current: "chat" | "saved" | "profile" | "history" | "closet" }) {
   const [open, setOpen] = useState(false);
   const [startingNewChat, setStartingNewChat] = useState(false);
 
@@ -89,6 +89,11 @@ export function Sidebar({ current }: { current: "chat" | "saved" | "profile" | "
           <Link href="/profile" onClick={() => setOpen(false)} className={linkClasses(current === "profile")}>
             <UserIcon className="size-5" aria-hidden="true" />
             Profile
+          </Link>
+
+          <Link href="/closet" onClick={() => setOpen(false)} className={linkClasses(current === "closet")}>
+            <ShirtIcon className="size-5" aria-hidden="true" />
+            My Closet
           </Link>
 
           <Link href="/history" onClick={() => setOpen(false)} className={linkClasses(current === "history")}>

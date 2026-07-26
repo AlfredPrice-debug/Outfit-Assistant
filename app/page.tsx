@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { NavHeader } from "@/components/NavHeader";
 import { ChatInput } from "@/components/ChatInput";
 import { OutfitCard, type OutfitWithId } from "@/components/OutfitCard";
+import { SwipeableOutfitStack } from "@/components/SwipeableOutfitStack";
 import { Avatar } from "@/components/Avatar";
 import { MessageActions } from "@/components/MessageActions";
 import { useUserAvatar } from "@/lib/client/useUserAvatar";
@@ -14,7 +15,15 @@ import type { ChatHistoryMessage } from "@/lib/apiTypes";
 
 type UIMessage =
   | { id: string; role: "user"; content: string }
-  | { id: string; role: "assistant"; outfits: OutfitWithId[]; sourceMessage: string }
+  | {
+      id: string;
+      role: "assistant";
+      outfits: OutfitWithId[];
+      sourceMessage: string;
+      // Present only for messages generated while chatMode was "swipe";
+      // conversation-mode messages render the plain static list instead.
+      swipeState?: { kept: string[]; discarded: string[] };
+    }
   | { id: string; role: "assistant-error"; content: string; sourceMessage: string };
 
 interface PendingState {
@@ -56,6 +65,7 @@ export default function ChatPage() {
   const [pending, setPending] = useState<PendingState | null>(null);
   const [thinkingIndex, setThinkingIndex] = useState(0);
   const [banner, setBanner] = useState<string | null>(null);
+  const [chatMode, setChatMode] = useState<"conversation" | "swipe" | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { key: userAvatarKey } = useUserAvatar();
   const userAvatarSrc = getUserAvatar(userAvatarKey).src;
@@ -103,8 +113,43 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, pending]);
 
+  function handleSwipeDecide(messageId: string, outfitId: string, direction: "left" | "right") {
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== messageId || m.role !== "assistant" || !m.swipeState) return m;
+        return {
+          ...m,
+          swipeState: {
+            kept: direction === "right" ? [...m.swipeState.kept, outfitId] : m.swipeState.kept,
+            discarded: direction === "left" ? [...m.swipeState.discarded, outfitId] : m.swipeState.discarded,
+          },
+        };
+      }),
+    );
+  }
+
+  function handleSwipeUndo(messageId: string, outfitId: string) {
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== messageId || m.role !== "assistant" || !m.swipeState) return m;
+        return {
+          ...m,
+          swipeState: {
+            kept: m.swipeState.kept.filter((id) => id !== outfitId),
+            discarded: m.swipeState.discarded.filter((id) => id !== outfitId),
+          },
+        };
+      }),
+    );
+  }
+
   async function sendMessage(text: string) {
     setBanner(null);
+    // The conversation/swipe choice is only shown once, on a fresh chat. If
+    // the user starts typing instead of clicking a button, it defaults to
+    // conversation mode rather than staying unresolved.
+    const effectiveMode = chatMode ?? "conversation";
+    if (chatMode === null) setChatMode("conversation");
     setMessages((prev) => [
       ...prev,
       {
@@ -154,7 +199,13 @@ export default function ChatPage() {
             setPending(null);
             setMessages((prev) => [
               ...prev,
-              { id: `assistant-${prev.length}`, role: "assistant", outfits: event.outfits, sourceMessage: text },
+              {
+                id: `assistant-${prev.length}`,
+                role: "assistant",
+                outfits: event.outfits,
+                sourceMessage: text,
+                swipeState: effectiveMode === "swipe" ? { kept: [], discarded: [] } : undefined,
+              },
             ]);
           } else if (event.type === "error") {
             settled = true;
@@ -212,6 +263,29 @@ export default function ChatPage() {
               <div className="max-w-[85%] rounded-card border border-brass bg-butter px-4 py-3 font-body text-body text-espresso shadow-card">
                 Hi, I&apos;m Outfit MC! What would you like me to help you with today?
               </div>
+              {chatMode === null && (
+                <>
+                  <div className="max-w-[85%] rounded-card border border-brass bg-butter px-4 py-3 font-body text-body text-espresso shadow-card">
+                    Would you like to have a conversation or swipe for your outfit ideas?
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setChatMode("swipe")}
+                      className="rounded-pill bg-amber px-4 py-2 font-utility text-utility uppercase text-espresso shadow-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
+                    >
+                      Let me swipe!
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setChatMode("conversation")}
+                      className="rounded-pill border border-brass px-4 py-2 font-utility text-utility uppercase text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
+                    >
+                      Let&apos;s talk
+                    </button>
+                  </div>
+                </>
+              )}
             </li>
           )}
 
@@ -229,9 +303,24 @@ export default function ChatPage() {
                 <div className="flex flex-col gap-3">
                   <Avatar src={assistantAvatarSrc} label="Outfit MC" />
                   <div className="flex flex-col gap-6">
-                    {message.outfits.map((outfit) => (
-                      <OutfitCard key={outfit.id} outfit={outfit} />
-                    ))}
+                    {message.swipeState ? (
+                      <>
+                        <SwipeableOutfitStack
+                          outfits={message.outfits}
+                          keptIds={message.swipeState.kept}
+                          discardedIds={message.swipeState.discarded}
+                          onDecide={(outfitId, direction) => handleSwipeDecide(message.id, outfitId, direction)}
+                          onUndo={(outfitId) => handleSwipeUndo(message.id, outfitId)}
+                        />
+                        {message.outfits
+                          .filter((outfit) => message.swipeState!.kept.includes(outfit.id))
+                          .map((outfit) => (
+                            <OutfitCard key={outfit.id} outfit={outfit} showAddToCloset />
+                          ))}
+                      </>
+                    ) : (
+                      message.outfits.map((outfit) => <OutfitCard key={outfit.id} outfit={outfit} />)
+                    )}
                   </div>
                   <MessageActions
                     onRetry={() => sendMessage(message.sourceMessage)}

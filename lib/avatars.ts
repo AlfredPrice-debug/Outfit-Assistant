@@ -62,8 +62,7 @@ export type UserAvatarKey =
   | "yorkie"
   | "catpearls"
   | "badger"
-  | "hippo"
-  | "crow";
+  | "hippo";
 
 export interface UserAvatarOption {
   key: UserAvatarKey;
@@ -89,7 +88,6 @@ export const USER_AVATARS: UserAvatarOption[] = [
   { key: "catpearls", label: "Cat with Pearls", src: "/avatars/catpearls.png" },
   { key: "badger", label: "Painter Badger", src: "/avatars/badger.png" },
   { key: "hippo", label: "Hippo", src: "/avatars/hippo.png" },
-  { key: "crow", label: "Crow", src: "/avatars/crow.png" },
 ];
 
 export const DEFAULT_USER_AVATAR_KEY: UserAvatarKey = "fox";

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { SearchIcon } from "lucide-react";
 import type { OutfitWithId } from "@/lib/apiTypes";
+import { addOutfitToCloset } from "@/lib/client/closet";
 
 export type { OutfitWithId };
 
@@ -16,14 +17,20 @@ const LAYER_LABELS: Record<"top" | "bottom" | "outerwear" | "shoes", string> = {
 export function OutfitCard({
   outfit,
   onSaveChange,
+  showAddToCloset = false,
 }: {
   outfit: OutfitWithId;
   onSaveChange?: (id: string, isSaved: boolean) => void;
+  showAddToCloset?: boolean;
 }) {
   const [isSaved, setIsSaved] = useState(outfit.isSaved);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isUnavailable = outfit.id.startsWith("unsaved-");
+
+  const [addedToCloset, setAddedToCloset] = useState(false);
+  const [addingToCloset, setAddingToCloset] = useState(false);
+  const [closetError, setClosetError] = useState<string | null>(null);
 
   async function toggleSave() {
     const next = !isSaved;
@@ -45,6 +52,19 @@ export function OutfitCard({
       setError(err instanceof Error ? err.message : "Couldn't update this outfit.");
     } finally {
       setPending(false);
+    }
+  }
+
+  async function handleAddToCloset() {
+    setAddingToCloset(true);
+    setClosetError(null);
+    try {
+      await addOutfitToCloset(outfit);
+      setAddedToCloset(true);
+    } catch (err) {
+      setClosetError(err instanceof Error ? err.message : "Couldn't add this outfit to your closet.");
+    } finally {
+      setAddingToCloset(false);
     }
   }
 
@@ -131,6 +151,24 @@ export function OutfitCard({
           <p role="alert" className="rounded-small bg-porcelain px-3 py-2 font-body text-small text-espresso">
             {error}
           </p>
+        )}
+
+        {showAddToCloset && (
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={handleAddToCloset}
+              disabled={addingToCloset || addedToCloset}
+              className="rounded-pill border border-brass px-4 py-2 font-utility text-utility uppercase text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool disabled:opacity-50"
+            >
+              {addedToCloset ? "Added to closet" : "Add to closet"}
+            </button>
+            {closetError && (
+              <p role="alert" className="rounded-small bg-porcelain px-3 py-2 font-body text-small text-espresso">
+                {closetError}
+              </p>
+            )}
+          </div>
         )}
       </div>
     </article>
