@@ -147,16 +147,15 @@ anywhere in the app:
 
 - **`USER_AVATARS`**: 18 illustrated character icons standing in for the
   human user, who has no profile photo in this app.
-- **`ASSISTANT_AVATARS`**: looks for Outfit MC, the assistant's persona
-  (currently 2: Floral Wrap, Rust Sweater; a third, black turtleneck, is
-  cropped and ready to add once its matching thinking-pose photo arrives).
-  Each option is really a pair: a normal `src` and a matching `thinkingSrc`
-  from the same look in a "thinking" pose. Picking a look picks both at
-  once, so the pending/thinking indicator always shows the correct pose for
-  whichever look is active, not a mismatched one. An earlier 6-look set
-  (blazer, tablet, red blouse, gray turtleneck, leather jacket, leopard
-  print) was replaced outright rather than reprocessed: its source images
-  weren't cropped cleanly and the user provided a fresh set instead.
+- **`ASSISTANT_AVATARS`**: 3 looks for Outfit MC, the assistant's persona
+  (Floral Wrap, Rust Sweater, Black Turtleneck). Each option is really a
+  pair: a normal `src` and a matching `thinkingSrc` from the same look in a
+  "thinking" pose. Picking a look picks both at once, so the
+  pending/thinking indicator always shows the correct pose for whichever
+  look is active, not a mismatched one. An earlier 6-look set (blazer,
+  tablet, red blouse, gray turtleneck, leather jacket, leopard print) was
+  replaced outright rather than reprocessed: its source images weren't
+  cropped cleanly and the user provided a fresh set instead.
 
 Both choices are stored in `localStorage`, not the database. There's no
 `User` model to attach either to, and they're cosmetic enough not to need
@@ -175,6 +174,33 @@ silently reintroduce this. Self-hosted `next/image` also requires the
 `sharp` package at runtime (in `dependencies`, not `devDependencies` — it
 must survive a production-only install) or every optimized image silently
 fails the same way.
+
+## Logo, favicon, and link previews
+
+The app's logo (a stylist silhouette over a clothes hanger, plus an "OutFit
+Me" wordmark) is cropped once from a single source image into three assets:
+
+- **`app/icon.png`** / **`app/apple-icon.png`**: the silhouette-and-hanger
+  mark only, no wordmark, since text isn't legible at favicon/home-screen-icon
+  sizes. Both are Next.js's file-based metadata convention, so they're picked
+  up and linked automatically with no manual `<link>` tags or metadata
+  entries needed. `icon.png` keeps a transparent background; `apple-icon.png`
+  is flattened onto a solid porcelain background, since iOS doesn't handle
+  transparent home-screen icons well.
+- **`public/logo-wordmark.png`**: just the "OutFit Me" lettering, transparent
+  background, rendered at 2x resolution for a crisp look at small sizes. This
+  is what replaced the plain-text title in `NavHeader.tsx`.
+- **`app/opengraph-image.png`**: the full mark (silhouette, hanger, and
+  wordmark) composited on a porcelain background at the standard 1200x630 OG
+  size, used for link previews (iMessage, Slack, etc). This one needs
+  `metadataBase` set in `app/layout.tsx` to resolve to an absolute URL;
+  Railway automatically injects `RAILWAY_PUBLIC_DOMAIN` for any service with
+  a public domain, so this works with no manual configuration in production
+  (falls back to `http://localhost:3000` otherwise).
+
+All three routes end in `.png`, so they're already covered by the same
+extension-based middleware exclusion described below, no changes needed
+there either.
 
 ## Sidebar and new chat
 

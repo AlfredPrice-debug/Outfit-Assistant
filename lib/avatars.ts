@@ -1,7 +1,7 @@
 // Plain data, no "use client" needed, safe to import from server or client
 // components.
 
-export type AssistantAvatarKey = "floral" | "rust";
+export type AssistantAvatarKey = "floral" | "rust" | "blackturtle";
 
 export interface AssistantAvatarOption {
   key: AssistantAvatarKey;
@@ -15,8 +15,7 @@ export interface AssistantAvatarOption {
 // Outfit MC, the assistant's persona. The user picks one look; its matching
 // thinking pose comes along with it automatically rather than being a
 // separate choice. This set replaces an earlier one whose source images
-// weren't cropped cleanly (see README); a third look (black turtleneck) is
-// pending its matching thinking-pose image.
+// weren't cropped cleanly (see README).
 export const ASSISTANT_AVATARS: AssistantAvatarOption[] = [
   {
     key: "floral",
@@ -29,6 +28,12 @@ export const ASSISTANT_AVATARS: AssistantAvatarOption[] = [
     label: "Rust Sweater",
     src: "/avatars/outfitmc_rust.png",
     thinkingSrc: "/avatars/outfitmc_rust_thinking.png",
+  },
+  {
+    key: "blackturtle",
+    label: "Black Turtleneck",
+    src: "/avatars/outfitmc_blackturtle.png",
+    thinkingSrc: "/avatars/outfitmc_blackturtle_thinking.png",
   },
 ];
 

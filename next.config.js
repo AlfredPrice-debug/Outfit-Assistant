@@ -6,7 +6,7 @@ const nextConfig = {
     // across Avatar/OutfitCard (32/40/56/72) aren't all in Next's own
     // defaults, so they're listed explicitly here rather than picking sizes
     // to match an implicit, easy-to-drift-from allowlist.
-    imageSizes: [32, 40, 56, 72],
+    imageSizes: [32, 40, 56, 72, 128],
   },
 };
 

@@ -20,7 +20,16 @@ const outfitUtility = OutfitUtilityFont({
   variable: "--font-utility",
 });
 
+// Needed so the OG image (app/opengraph-image.png) resolves to an absolute
+// URL for link previews (iMessage, Slack, etc). Railway injects
+// RAILWAY_PUBLIC_DOMAIN automatically for any service with a public domain,
+// so no manual configuration is required in production.
+const siteUrl = process.env.RAILWAY_PUBLIC_DOMAIN
+  ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+  : "http://localhost:3000";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "OutFit Me",
   description: "Concrete outfit ideas for any occasion, grounded in real fashion inspiration.",
 };

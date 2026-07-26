@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Avatar } from "./Avatar";
 import { Sidebar } from "./Sidebar";
@@ -12,9 +13,14 @@ export function NavHeader({ current }: { current: "chat" | "saved" | "profile" |
   return (
     <header className="fixed inset-x-0 top-0 z-40 mx-auto flex h-16 w-full max-w-app items-center justify-between border-b border-brass bg-porcelain px-5">
       <Sidebar current={current} />
-      <h1 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-display text-title text-espresso">
-        OutFit Me
-      </h1>
+      <Image
+        src="/logo-wordmark.png"
+        alt="OutFit Me"
+        width={128}
+        height={28}
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+        priority
+      />
       {current !== "profile" && (
         <Link
           href="/profile"
