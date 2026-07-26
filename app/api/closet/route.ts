@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const userId = getOwnerId();
+    const userId = await getOwnerId();
     const items = await prisma.closetItem.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const userId = getOwnerId();
+    const userId = await getOwnerId();
     const item = await prisma.closetItem.create({ data: { userId, ...parsed.data } });
     return NextResponse.json({ item });
   } catch {

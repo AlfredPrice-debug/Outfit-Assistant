@@ -43,18 +43,33 @@ Railway deploys from a GitHub repo, so this needs to exist before step 3.
    service's `DATABASE_URL`. Railway will keep this in sync automatically —
    you never type a connection string by hand.
 
-## 5. Set the remaining environment variables
+## 5. Create a Google OAuth Client ID
+
+1. Go to the [Google Cloud Console credentials page](https://console.cloud.google.com/apis/credentials)
+   and create (or pick) a project.
+2. Click **Create credentials → OAuth client ID**, application type **Web
+   application**.
+3. Under **Authorized redirect URIs**, add both:
+   - `http://localhost:3000/api/auth/callback/google` (local dev)
+   - `https://<your-railway-domain>/api/auth/callback/google` (production —
+     one client covers both at this app's scale)
+4. Copy the generated Client ID and Client Secret — you'll paste them into
+   Railway in the next step.
+
+## 6. Set the remaining environment variables
 
 Still in the app service's **Variables** tab, add:
 
 | Variable | Value |
 |---|---|
 | `GEMINI_API_KEY` | The key from step 1 |
-| `APP_PASSCODE` | A passcode you haven't reused anywhere else |
-| `OWNER_ID` | Any non-empty string — e.g. your name, no spaces |
+| `AUTH_SECRET` | Generate with `npx auth secret` (or any random 32+ byte string) |
+| `AUTH_GOOGLE_ID` | The Client ID from step 5 |
+| `AUTH_GOOGLE_SECRET` | The Client Secret from step 5 |
+| `ALLOWED_EMAILS` | Comma-separated emails allowed to sign in, e.g. `you@example.com` |
 
 `DATABASE_URL` should already be present from step 4 as a reference variable.
-Confirm all four variables listed in `.env.example` are set before continuing.
+Confirm all six variables listed in `.env.example` are set before continuing.
 
 ## 6. Deploy
 
@@ -72,7 +87,7 @@ Confirm all four variables listed in `.env.example` are set before continuing.
 This app is mobile-first, so the real test is on a phone, not a laptop:
 
 1. Open the Railway URL on your phone.
-2. Enter the passcode from step 5.
+2. Sign in with an allow-listed Google account.
 3. Try "summer outfit ideas for a coffee date" from the example chips.
 4. Confirm you get three outfit cards, each with items by layer, a rationale,
    and either two working inspiration links or a note that none were found.
@@ -82,9 +97,12 @@ This app is mobile-first, so the real test is on a phone, not a laptop:
 
 ## Troubleshooting
 
-- **Blank screen or 500 on every page**: check that `APP_PASSCODE` is set —
-  the app fails loudly instead of silently if it's missing, but it's the
-  first thing to check.
+- **Redirected back to `/signin` with "This email isn't approved"**: the
+  signed-in Google account isn't in `ALLOWED_EMAILS`. Add it (comma-separated,
+  case doesn't matter) and redeploy.
+- **`redirect_uri_mismatch` from Google**: the registered redirect URI in the
+  Google Cloud Console (step 5) doesn't exactly match the URL Railway is
+  actually serving — check scheme (`https://`) and host carefully.
 - **Chat says the Gemini key is missing/invalid**: re-check `GEMINI_API_KEY`
   in Railway's Variables tab; a copy-paste with a trailing space is the most
   common cause.

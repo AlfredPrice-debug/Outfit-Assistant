@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Message is required." }, { status: 400 });
   }
   const { message } = parsed.data;
-  const userId = getOwnerId();
+  const userId = await getOwnerId();
 
   // History is read before the new user message is written so it never
   // shows up twice: once as trailing context, once as the live request.

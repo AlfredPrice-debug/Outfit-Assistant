@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const userId = getOwnerId();
+    const userId = await getOwnerId();
     const { count } = await prisma.closetItem.deleteMany({ where: { id: params.id, userId } });
     if (count === 0) {
       return NextResponse.json({ error: "Closet item not found." }, { status: 404 });

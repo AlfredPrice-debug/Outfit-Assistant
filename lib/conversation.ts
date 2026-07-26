@@ -5,7 +5,7 @@ import { getOwnerId } from "./owner";
 // that hasn't been archived. Created lazily so a brand-new deployment
 // doesn't need a seed row.
 export async function getActiveConversationId(): Promise<string> {
-  const userId = getOwnerId();
+  const userId = await getOwnerId();
   const existing = await prisma.conversation.findFirst({
     where: { userId, isArchived: false },
     orderBy: { createdAt: "desc" },
@@ -19,7 +19,7 @@ export async function getActiveConversationId(): Promise<string> {
 // one. Nothing is deleted; archived messages and their outfits stay in the
 // database, they just stop being what the chat page loads.
 export async function startNewConversation(): Promise<string> {
-  const userId = getOwnerId();
+  const userId = await getOwnerId();
   await prisma.conversation.updateMany({
     where: { userId, isArchived: false },
     data: { isArchived: true },
@@ -38,7 +38,7 @@ export interface ConversationSummary {
 // (Gemini's own turns are a JSON pointer, not prose, so they'd make a
 // useless preview) truncated to a scannable length.
 export async function listArchivedConversations(): Promise<ConversationSummary[]> {
-  const userId = getOwnerId();
+  const userId = await getOwnerId();
   const conversations = await prisma.conversation.findMany({
     where: { userId, isArchived: true },
     orderBy: { createdAt: "desc" },
@@ -64,7 +64,7 @@ export async function listArchivedConversations(): Promise<ConversationSummary[]
 // matching `id` for this user, so the caller can tell "not found" apart
 // from "found and resumed".
 export async function resumeConversation(id: string): Promise<number> {
-  const userId = getOwnerId();
+  const userId = await getOwnerId();
   const [, resumed] = await prisma.$transaction([
     prisma.conversation.updateMany({ where: { userId, isArchived: false }, data: { isArchived: true } }),
     prisma.conversation.updateMany({ where: { id, userId }, data: { isArchived: false } }),
@@ -77,7 +77,7 @@ export async function resumeConversation(id: string): Promise<number> {
 // during it are untouched. Returns the number of conversations matching
 // `id` for this user.
 export async function deleteConversation(id: string): Promise<number> {
-  const userId = getOwnerId();
+  const userId = await getOwnerId();
   const [, deleted] = await prisma.$transaction([
     prisma.chatMessage.deleteMany({ where: { conversationId: id, userId } }),
     prisma.conversation.deleteMany({ where: { id, userId } }),

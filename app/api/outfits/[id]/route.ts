@@ -15,7 +15,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   try {
-    const userId = getOwnerId();
+    const userId = await getOwnerId();
     const { count } = await prisma.outfit.updateMany({
       where: { id: params.id, userId },
       data: { isSaved: parsed.data.isSaved },

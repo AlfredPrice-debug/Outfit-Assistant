@@ -36,8 +36,8 @@ results so the inspiration links are real pages, not invented URLs. See
 - **Chat history.** Old (archived) chats live on the `/history` page. Resume
   one to swap it back to active, or delete it for good.
 - **Persisted history.** Your conversation survives a reload and a redeploy.
-- **One passcode.** The whole app sits behind a single shared passcode —
-  there's no per-user login because there's only one user.
+- **Google sign-in.** The app sits behind Google OAuth plus an email
+  allow-list — see [Auth](#auth) below.
 
 ## Running locally
 
@@ -45,8 +45,11 @@ results so the inspiration links are real pages, not invented URLs. See
    ```bash
    npm install
    ```
-2. Copy `.env.example` to `.env` and fill in all four variables (see below).
-   You'll need a local Postgres database — `DATABASE_URL` should point at it.
+2. Copy `.env.example` to `.env` and fill in all six variables (see below).
+   You'll need a local Postgres database — `DATABASE_URL` should point at it —
+   and a Google Cloud OAuth Client ID/Secret (see `DEPLOY.md` for the exact
+   steps, including the `http://localhost:3000/api/auth/callback/google`
+   redirect URI to register for local dev).
 3. Apply the schema:
    ```bash
    npx prisma migrate dev
@@ -55,12 +58,12 @@ results so the inspiration links are real pages, not invented URLs. See
    ```bash
    npm run dev
    ```
-5. Open `http://localhost:3000`, enter your `APP_PASSCODE`, and describe an
-   occasion to Outfit MC.
+5. Open `http://localhost:3000`, sign in with an allow-listed Google account,
+   and describe an occasion to Outfit MC.
 
 ## Environment variables
 
-All four are required — the app fails with a readable error rather than a
+All six are required — the app fails with a readable error rather than a
 blank screen if one is missing. See `.env.example` for the same list with
 inline comments.
 
@@ -68,8 +71,9 @@ inline comments.
 |---|---|
 | `GEMINI_API_KEY` | Server-side only. Never sent to the client, never logged, never returned in a response body. All Gemini calls happen inside route handlers (`app/api/chat/route.ts`). |
 | `DATABASE_URL` | Postgres connection string. Railway injects this automatically once you link a Postgres instance (see `DEPLOY.md`). |
-| `APP_PASSCODE` | The shared passcode gating the entire app. Rotating it instantly invalidates every existing session, since the session cookie is signed with this value (see `lib/session.ts`). |
-| `OWNER_ID` | A stable string tagging every database row. See [Data model](#data-model) for why this exists even though there's only one user. |
+| `AUTH_SECRET` | Auth.js's session/token encryption secret. Generate with `npx auth secret`. |
+| `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Google OAuth 2.0 Client ID/Secret (see `DEPLOY.md`). |
+| `ALLOWED_EMAILS` | Comma-separated email allow-list, checked server-side in `auth.ts`'s `signIn` callback. See [Auth](#auth). |
 
 ## Data model
 
@@ -102,12 +106,33 @@ Four Prisma models, all defined in `prisma/schema.prisma`:
   (`/api/closet`). Nothing else reads it yet — see
   [Planned for v2](#planned-for-v2-closet-awareness).
 
-Every model carries `userId`, populated from `OWNER_ID` on every write. There's
-no `User` model and no auth relation — this is deliberately a config value,
-not a foreign key — so that adding real multi-user accounts later is a schema
-addition (a `User` table, a session tied to a real account) plus a query-layer
-change, not a migration that has to backfill ownership onto years of existing
-rows.
+Every model carries `userId`, now populated from the signed-in Auth.js
+session's real `User.id` (see [Auth](#auth)) on every write. It's still a
+plain indexed string, not a foreign key: rows written before accounts existed
+hold the old `OWNER_ID` value, which never matches a real `User.id`, so
+they're left orphaned rather than backfilled. New rows get a real `User.id`
+going forward.
+
+## Auth
+
+The app is gated by Google OAuth (via [Auth.js v5](https://authjs.dev)) plus
+a server-side email allow-list — Google auth succeeding on its own isn't
+enough. `middleware.ts` redirects any signed-out request to `/signin`, whose
+"Continue with Google" button calls `signIn("google")` from `auth.ts`
+(a server action). `auth.ts`'s `signIn` callback parses `ALLOWED_EMAILS`
+(comma-separated, case-insensitive) and rejects anyone not on it, sending
+them back to `/signin?error=AccessDenied` with a specific message.
+
+Sessions use the JWT strategy, not database sessions — one less DB round
+trip on every middleware-gated request, at the cost of no per-device session
+revocation (acceptable for a small allow-listed app). `lib/owner.ts`'s
+`getOwnerId()` is the single choke point every route/query uses to get the
+current user's id, reading it off the session via `auth()`.
+
+Auth.js's own Prisma-adapter tables (`User`, `Account`, `Session`,
+`VerificationToken`) were added as a purely additive migration — see the
+[Data model](#data-model) note above on why they aren't foreign-keyed to the
+existing tables' `userId` columns.
 
 ## How Gemini grounding works here
 

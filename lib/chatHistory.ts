@@ -1,5 +1,6 @@
 import { prisma } from "./prisma";
 import { getActiveConversationId } from "./conversation";
+import { getOwnerId } from "./owner";
 import type { FinalOutfit } from "./schemas";
 import type { ChatTurn } from "./gemini";
 import type { ChatHistoryMessage } from "./apiTypes";
@@ -38,9 +39,10 @@ function parsePointer(content: string): AssistantPointer | null {
 // avoid repeating itself or to act on "make the second one warmer", without
 // spending tokens replaying rationale text it already generated once.
 export async function getRecentHistory(): Promise<ChatTurn[]> {
+  const userId = await getOwnerId();
   const conversationId = await getActiveConversationId();
   const rows = await prisma.chatMessage.findMany({
-    where: { conversationId },
+    where: { conversationId, userId },
     orderBy: { createdAt: "desc" },
     take: HISTORY_LIMIT,
   });
@@ -57,9 +59,10 @@ export async function getRecentHistory(): Promise<ChatTurn[]> {
 }
 
 export async function listChatMessages(): Promise<ChatHistoryMessage[]> {
+  const userId = await getOwnerId();
   const conversationId = await getActiveConversationId();
   const rows = await prisma.chatMessage.findMany({
-    where: { conversationId },
+    where: { conversationId, userId },
     orderBy: { createdAt: "asc" },
   });
 
@@ -72,7 +75,7 @@ export async function listChatMessages(): Promise<ChatHistoryMessage[]> {
   }
 
   const outfitRows = allOutfitIds.size
-    ? await prisma.outfit.findMany({ where: { id: { in: [...allOutfitIds] } } })
+    ? await prisma.outfit.findMany({ where: { id: { in: [...allOutfitIds] }, userId } })
     : [];
   const outfitById = new Map(outfitRows.map((o) => [o.id, o]));
 

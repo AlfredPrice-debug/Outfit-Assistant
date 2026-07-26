@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const season = req.nextUrl.searchParams.get("season") || undefined;
 
   try {
-    const userId = getOwnerId();
+    const userId = await getOwnerId();
     const outfits = await prisma.outfit.findMany({
       where: {
         userId,

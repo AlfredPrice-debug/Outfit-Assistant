@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 import {
   MenuIcon,
   XIcon,
@@ -12,6 +13,7 @@ import {
   HistoryIcon,
   ShirtIcon,
   BookmarkIcon,
+  LogOutIcon,
 } from "lucide-react";
 
 export function Sidebar({ current }: { current: "chat" | "saved" | "profile" | "history" | "closet" }) {
@@ -118,6 +120,11 @@ export function Sidebar({ current }: { current: "chat" | "saved" | "profile" | "
             <HistoryIcon className="size-5" aria-hidden="true" />
             Chat history
           </Link>
+
+          <button type="button" onClick={() => signOut()} className={linkClasses(false)}>
+            <LogOutIcon className="size-5" aria-hidden="true" />
+            Sign out
+          </button>
         </nav>
       </div>
     </>
