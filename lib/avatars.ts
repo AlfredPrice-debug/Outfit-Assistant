@@ -48,7 +48,6 @@ export function getAssistantAvatar(key: AssistantAvatarKey): AssistantAvatarOpti
 export type UserAvatarKey =
   | "owl"
   | "toucan"
-  | "ram"
   | "rabbit"
   | "scottie"
   | "gorilla"
@@ -56,7 +55,6 @@ export type UserAvatarKey =
   | "monkey"
   | "shepherd"
   | "fox"
-  | "scientist"
   | "walrus"
   | "ninjacat"
   | "yorkie"
@@ -76,7 +74,6 @@ export interface UserAvatarOption {
 export const USER_AVATARS: UserAvatarOption[] = [
   { key: "owl", label: "Hoot Sinatra", src: "/avatars/owl.png" },
   { key: "toucan", label: "Beak Jagger", src: "/avatars/toucan.png" },
-  { key: "ram", label: "Woolliam Shakespear", src: "/avatars/ram.png" },
   { key: "rabbit", label: "Egg Sheeran", src: "/avatars/rabbit.png" },
   { key: "scottie", label: "Scott McTerrier", src: "/avatars/scottie.png" },
   { key: "gorilla", label: "Congo Malone", src: "/avatars/gorilla.png" },
@@ -84,7 +81,6 @@ export const USER_AVATARS: UserAvatarOption[] = [
   { key: "monkey", label: "Bananarama Jones", src: "/avatars/monkey.png" },
   { key: "shepherd", label: "Sherlock Bones", src: "/avatars/shepherd.png" },
   { key: "fox", label: "Ferris Fox-eller", src: "/avatars/fox.png" },
-  { key: "scientist", label: "Professor Von Fizzle", src: "/avatars/scientist.png" },
   { key: "walrus", label: "Sir Tuskalot", src: "/avatars/walrus.png" },
   { key: "ninjacat", label: "Meow-t Damon", src: "/avatars/ninjacat.png" },
   { key: "yorkie", label: "Beau Bradley", src: "/avatars/yorkie.png" },

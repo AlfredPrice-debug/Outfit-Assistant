@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { NavHeader } from "@/components/NavHeader";
+import { AskOutfitMC } from "@/components/AskOutfitMC";
 
 interface ConversationSummary {
   id: string;
@@ -114,6 +115,7 @@ export default function HistoryPage() {
           ))}
         </ul>
       </main>
+      <AskOutfitMC message="This is your Chat history, every conversation gets archived here once you start a new one. Resume an old one to pick up right where you left off, or delete it for good." />
     </div>
   );
 }

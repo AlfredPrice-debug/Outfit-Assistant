@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   MenuIcon,
@@ -68,8 +69,11 @@ export function Sidebar({ current }: { current: "chat" | "saved" | "profile" | "
             open ? "translate-x-0" : "-translate-x-full"
           }`}
         >
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-display text-title text-espresso">Menu</h2>
+          <div className="relative mb-4 flex h-8 items-center justify-end">
+            <div className="absolute left-1/2 flex -translate-x-1/2 items-center gap-2">
+              <Image src="/logo-icon.png" alt="" width={18} height={24} aria-hidden="true" />
+              <h2 className="font-display text-title text-espresso">Menu</h2>
+            </div>
             <button
               type="button"
               onClick={() => setOpen(false)}
@@ -105,11 +109,7 @@ export function Sidebar({ current }: { current: "chat" | "saved" | "profile" | "
             My Closet
           </Link>
 
-          <Link
-            href="/saved"
-            onClick={() => setOpen(false)}
-            className={`${linkClasses(current === "saved")} ml-4`}
-          >
+          <Link href="/saved" onClick={() => setOpen(false)} className={linkClasses(current === "saved")}>
             <BookmarkIcon className="size-5" aria-hidden="true" />
             Outfit Cards
           </Link>

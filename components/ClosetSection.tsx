@@ -2,9 +2,6 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { ChevronDownIcon, Trash2Icon } from "lucide-react";
-import { Avatar } from "./Avatar";
-import { useAssistantAvatar } from "@/lib/client/useAssistantAvatar";
-import { getAssistantAvatar } from "@/lib/avatars";
 import type { ClosetCategory } from "@/lib/schemas";
 
 interface ClosetItem {
@@ -30,8 +27,6 @@ export function ClosetSection() {
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<ClosetCategory>>(new Set());
-  const { key: assistantKey } = useAssistantAvatar();
-  const assistantAvatarSrc = getAssistantAvatar(assistantKey).src;
 
   useEffect(() => {
     (async () => {
@@ -95,15 +90,7 @@ export function ClosetSection() {
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="font-display text-title text-espresso">My closet</h2>
-      <div className="flex items-start gap-2 rounded-card border border-brass bg-butter px-4 py-3 shadow-card">
-        <Avatar src={assistantAvatarSrc} label="Outfit MC" />
-        <p className="font-body text-body text-espresso">
-          Log the tops, bottoms, outerwear, shoes, and accessories (even a watch) you already own. When you ask me
-          for outfit ideas in chat, I&apos;ll mix pieces from here in with new suggestions, so you get looks built
-          from what you have and what&apos;s worth adding.
-        </p>
-      </div>
+      <h2 className="font-display text-title text-espresso">My Closet</h2>
 
       {error && (
         <p role="alert" className="font-body text-small text-espresso">

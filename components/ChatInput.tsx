@@ -21,7 +21,7 @@ export function ChatInput({
 
   return (
     <form onSubmit={onSubmit} className="sticky bottom-0 bg-porcelain px-5 py-4">
-      <div className="flex items-center gap-2 rounded-pill border border-brass bg-porcelain py-1.5 pl-4 pr-1.5 focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-deepPool">
+      <div className="flex items-center gap-2 rounded-pill border border-espresso bg-porcelain py-1.5 pl-4 pr-1.5 focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-deepPool">
         <label htmlFor="chat-input" className="sr-only">
           Describe an occasion, season, or vibe
         </label>

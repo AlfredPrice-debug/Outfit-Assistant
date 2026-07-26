@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { NavHeader } from "@/components/NavHeader";
 import { Avatar } from "@/components/Avatar";
+import { AskOutfitMC } from "@/components/AskOutfitMC";
 import { useUserAvatar } from "@/lib/client/useUserAvatar";
 import { useAssistantAvatar } from "@/lib/client/useAssistantAvatar";
 import { USER_AVATARS, ASSISTANT_AVATARS, getUserAvatar, getAssistantAvatar } from "@/lib/avatars";
@@ -44,7 +45,7 @@ export default function ProfilePage() {
       <main className="flex flex-1 flex-col gap-6 px-5 py-6">
         <div className="flex flex-col items-center gap-3 text-center">
           <Avatar src={getUserAvatar(userKey).src} size={72} label="Your current avatar" />
-          <h2 className="font-display text-title text-espresso">Your avatar</h2>
+          <h2 className="font-display text-title text-espresso">Your Avatar</h2>
         </div>
 
         <div role="radiogroup" aria-label="Avatar options" className="grid grid-cols-4 gap-3">
@@ -75,14 +76,14 @@ export default function ProfilePage() {
         <hr className="border-brass" />
 
         <div className="flex flex-col items-center gap-3 text-center">
-          <Avatar src={getAssistantAvatar(assistantKey).src} size={72} label="Outfit MC's current headshot" />
-          <h2 className="font-display text-title text-espresso">Outfit MC</h2>
+          <Avatar src={getAssistantAvatar(assistantKey).src} size={72} label="OutFit MC's current headshot" />
+          <h2 className="font-display text-title text-espresso">OutFit MC</h2>
           <p className="max-w-xs font-body text-body text-espresso">
-            Pick which headshot Outfit MC uses to greet you and talk you through outfit ideas.
+            Pick which headshot OutFit MC uses to greet you and talk you through outfit ideas.
           </p>
         </div>
 
-        <div role="radiogroup" aria-label="Outfit MC headshot options" className="grid grid-cols-3 gap-3">
+        <div role="radiogroup" aria-label="OutFit MC headshot options" className="grid grid-cols-3 gap-3">
           {ASSISTANT_AVATARS.map((option) => {
             const selected = option.key === assistantKey;
             return (
@@ -107,6 +108,7 @@ export default function ProfilePage() {
           {assistantJustSaved ? "Saved" : " "}
         </p>
       </main>
+      <AskOutfitMC message="This is your Profile, where you pick your own avatar and my headshot. Whatever you choose here shows up throughout the app." />
     </div>
   );
 }
