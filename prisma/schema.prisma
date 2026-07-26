@@ -1,0 +1,62 @@
+// Prisma schema for Outfit Assistant.
+//
+// Every model carries a `userId` column defaulted to a single owner value from
+// OWNER_ID. There is no User model and no auth relation in v1 — this is a
+// single-user app — but scoping every row by userId now means a future
+// multi-user upgrade is an auth + query-filter change, not a migration that
+// has to backfill ownership onto existing data.
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  role      String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model Outfit {
+  id               String   @id @default(cuid())
+  userId           String
+  title            String
+  occasion         String
+  season           String
+  // { top, bottom, outerwear, shoes, accessories: string[] } — kept as JSON
+  // rather than columns because the layer set is a UI/prompt concern, not a
+  // query concern; nothing filters on individual layers.
+  itemsByLayer     Json
+  rationale        String   @db.Text
+  // { label: string, url: string }[], 0-2 entries, sourced only from Gemini's
+  // Google Search grounding metadata. Never populated from model-generated text.
+  inspirationLinks Json
+  isSaved          Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  @@index([userId, isSaved, createdAt])
+  @@index([userId, occasion])
+  @@index([userId, season])
+}
+
+// v2 will let suggestions draw on what the user actually owns. The table
+// exists now so that migration is additive-only (new reads/writes against an
+// existing table) instead of a schema change layered onto live outfit data.
+// No route or query in this codebase touches this model.
+model ClosetItem {
+  id          String   @id @default(cuid())
+  userId      String
+  category    String
+  colorName   String
+  description String
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
