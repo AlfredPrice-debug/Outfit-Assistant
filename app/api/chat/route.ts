@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getOwnerId } from "@/lib/owner";
+import { getActiveConversationId } from "@/lib/conversation";
 import { generateOutfits } from "@/lib/gemini";
 import { encodeAssistantContent, getRecentHistory, listChatMessages } from "@/lib/chatHistory";
 import { attachedImageSchema } from "@/lib/schemas";
@@ -47,7 +48,9 @@ export async function POST(req: NextRequest) {
   // shows up twice — once as trailing context, once as the live request.
   let history: Awaited<ReturnType<typeof getRecentHistory>> = [];
   let dbAvailable = true;
+  let conversationId = "";
   try {
+    conversationId = await getActiveConversationId();
     history = await getRecentHistory();
   } catch {
     dbAvailable = false;
@@ -55,7 +58,7 @@ export async function POST(req: NextRequest) {
 
   if (dbAvailable) {
     try {
-      await prisma.chatMessage.create({ data: { userId, role: "user", content: message } });
+      await prisma.chatMessage.create({ data: { userId, conversationId, role: "user", content: message } });
     } catch {
       dbAvailable = false;
     }
@@ -106,7 +109,7 @@ export async function POST(req: NextRequest) {
               ),
             );
             await prisma.chatMessage.create({
-              data: { userId, role: "assistant", content: encodeAssistantContent(created) },
+              data: { userId, conversationId, role: "assistant", content: encodeAssistantContent(created) },
             });
             outfitsWithIds = finalResponse.outfits.map((outfit, i) => ({
               ...outfit,

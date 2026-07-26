@@ -66,3 +66,18 @@ export const attachedImageSchema = z.object({
 });
 
 export type AttachedImage = z.infer<typeof attachedImageSchema>;
+
+// What you log on the "My closet" section of the profile page. A fixed
+// category set (rather than free text) matches the layers outfits are
+// already organized by, so a future closet-aware prompt (see README's
+// planned v2) can match against it directly.
+export const closetCategorySchema = z.enum(["top", "bottom", "outerwear", "shoes", "accessory"]);
+
+export const closetItemInputSchema = z.object({
+  category: closetCategorySchema,
+  colorName: z.string().trim().min(1).max(40),
+  description: z.string().trim().min(1).max(120),
+});
+
+export type ClosetCategory = z.infer<typeof closetCategorySchema>;
+export type ClosetItemInput = z.infer<typeof closetItemInputSchema>;

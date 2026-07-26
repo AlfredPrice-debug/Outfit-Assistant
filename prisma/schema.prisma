@@ -14,14 +14,31 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// A conversation is a contiguous chat thread. "Start new chat" archives the
+// current one (isArchived: true) and creates a fresh one rather than
+// deleting anything, so old messages/outfits stay intact in the database —
+// they just stop being the thread that loads on the chat page.
+model Conversation {
+  id         String        @id @default(cuid())
+  userId     String
+  isArchived Boolean       @default(false)
+  createdAt  DateTime      @default(now())
+  messages   ChatMessage[]
+
+  @@index([userId, isArchived, createdAt])
+}
+
 model ChatMessage {
-  id        String   @id @default(cuid())
-  userId    String
-  role      String
-  content   String   @db.Text
-  createdAt DateTime @default(now())
+  id             String       @id @default(cuid())
+  userId         String
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  role           String
+  content        String       @db.Text
+  createdAt      DateTime     @default(now())
 
   @@index([userId, createdAt])
+  @@index([conversationId, createdAt])
 }
 
 model Outfit {

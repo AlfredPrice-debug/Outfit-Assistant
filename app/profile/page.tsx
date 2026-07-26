@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { NavHeader } from "@/components/NavHeader";
 import { Avatar } from "@/components/Avatar";
+import { ClosetSection } from "@/components/ClosetSection";
 import { useUserAvatar } from "@/lib/client/useUserAvatar";
 import { USER_AVATARS, getUserAvatar } from "@/lib/avatars";
 
@@ -56,8 +57,12 @@ export default function ProfilePage() {
         </div>
 
         <p role="status" className="text-center font-utility text-utility uppercase text-espresso" aria-live="polite">
-          {justSaved ? "Saved" : " "}
+          {justSaved ? "Saved" : " "}
         </p>
+
+        <hr className="border-brass" />
+
+        <ClosetSection />
       </main>
     </div>
   );

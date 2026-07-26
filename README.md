@@ -28,8 +28,15 @@ results so the inspiration links are real pages, not invented URLs. See
 - **Avatars.** The assistant has a fixed illustrated avatar; pick your own
   from 18 illustrated character icons via the small avatar button in the
   header (saved to this browser only — see [Data model](#data-model)).
+- **My closet.** Log what you already own (category, color, description) on
+  the profile page. Nothing reads this yet — see
+  [Planned for v2](#planned-for-v2-closet-awareness) — but it's there to log
+  against today.
 - **Save.** Toggle any outfit to save it; revisit it from the Saved outfits
   page, filterable by occasion and season, from any device.
+- **New chat.** Start a fresh conversation from the sidebar menu; the old one
+  is archived, not deleted, so it stays in the database but stops being what
+  the chat page loads.
 - **Persisted history.** Your conversation survives a reload and a redeploy.
 - **One passcode.** The whole app sits behind a single shared passcode —
   there's no per-user login because there's only one user.
@@ -68,13 +75,19 @@ inline comments.
 
 ## Data model
 
-Three Prisma models, all defined in `prisma/schema.prisma`:
+Four Prisma models, all defined in `prisma/schema.prisma`:
 
-- **`ChatMessage`** — `id`, `userId`, `role` (`"user"` or `"assistant"`),
-  `content`, `createdAt`. The full transcript. Assistant turns store a
-  compact pointer (`{ outfitIds, titles }`) rather than the full outfit JSON,
-  so the outfit's `isSaved` state — read live from `Outfit` — never drifts out
-  of sync with what's shown in chat history.
+- **`Conversation`** — `id`, `userId`, `isArchived`, `createdAt`. A chat
+  thread. Exactly one non-archived conversation exists per user at a time;
+  "Start new chat" in the sidebar archives it and creates a new one, so old
+  messages stay in the database instead of being deleted — they just stop
+  being the thread the chat page loads.
+- **`ChatMessage`** — `id`, `userId`, `conversationId`, `role` (`"user"` or
+  `"assistant"`), `content`, `createdAt`. The full transcript of one
+  conversation. Assistant turns store a compact pointer
+  (`{ outfitIds, titles }`) rather than the full outfit JSON, so the outfit's
+  `isSaved` state — read live from `Outfit` — never drifts out of sync with
+  what's shown in chat history.
 - **`Outfit`** — `id`, `userId`, `title`, `occasion`, `season`,
   `itemsByLayer` (JSON), `rationale`, `colorStory` (JSON), `inspirationLinks`
   (JSON), `isSaved`, `createdAt`. Every outfit Gemini generates is written
@@ -84,9 +97,12 @@ Three Prisma models, all defined in `prisma/schema.prisma`:
   color story bar — unlike `inspirationLinks`, these are trusted straight
   from the model (Zod validates the hex format, not the color choice), since
   there's no external source of truth for "what color is this cardigan".
+  Outfits aren't scoped to a conversation — saving one and starting a new
+  chat doesn't affect it.
 - **`ClosetItem`** — `id`, `userId`, `category`, `colorName`, `description`,
-  `createdAt`. The table exists and nothing else does: no route, no query, no
-  UI touches it in this codebase. See below.
+  `createdAt`. Logged from the "My closet" section of the profile page
+  (`/api/closet`). Nothing else reads it yet — see
+  [Planned for v2](#planned-for-v2-closet-awareness).
 
 Every model carries `userId`, populated from `OWNER_ID` on every write. There's
 no `User` model and no auth relation — this is deliberately a config value,
@@ -137,8 +153,9 @@ assistant's avatar is fixed — a calm pose for normal replies, a distinct
 "thinking" pose while generating — cropped from one illustrated character
 sheet (`ASSISTANT_AVATARS`). The user picks their own stand-in profile
 picture from a set of 18 illustrated character icons (`USER_AVATARS`) on a
-dedicated `/profile` page, reachable by tapping the avatar in the header from
-anywhere in the app; the choice is stored in `localStorage`, not the
+dedicated `/profile` page, reachable by tapping the avatar in the header or
+via "Profile" in the sidebar menu from anywhere in the app; the choice is
+stored in `localStorage`, not the
 database — there's no `User` model to attach it to, and it's cosmetic enough
 not to need one. Every visible chat bubble reflects the *current* choice
 (not a per-message snapshot), so switching avatars re-skins the whole
@@ -180,6 +197,17 @@ reprocessed with actual alpha transparency (any near-white pixel → fully
 transparent), which is why the checker texture is gone — not just hidden by
 tight cropping.
 
+## Sidebar and new chat
+
+`components/Sidebar.tsx` is a slide-out drawer, toggled by the hamburger
+button in the header, present on every page. It holds the app's real
+navigation: "Start new chat", "Profile", and "Saved outfits". Starting a new
+chat calls `POST /api/conversations`, which archives the current
+`Conversation` row and creates a new one (see [Data model](#data-model)),
+then does a full page navigation back to `/` — a plain client-side route
+push wouldn't re-run the chat page's history fetch since it only runs once,
+on mount.
+
 ## Failure states
 
 Handled visibly, not silently, per the project brief:
@@ -198,12 +226,11 @@ the project, linking Postgres, setting variables, and verifying the deploy.
 
 ## Planned for v2: closet awareness
 
-The `ClosetItem` model (`id`, `userId`, `category`, `colorName`, `description`,
-`createdAt`) already exists in the schema and migration, but nothing in the
-app reads or writes it yet. The plan for v2:
+The "My closet" section of the profile page (`components/ClosetSection.tsx`,
+`/api/closet`) already lets you log what you own — category, color, a short
+description — as `ClosetItem` rows (no photo upload, no image recognition).
+What's still planned:
 
-- A simple form (no photo upload, no image recognition) where you log what
-  you own — "navy chinos", "white sneakers" — as `ClosetItem` rows.
 - The Gemini prompt in `lib/gemini.ts` gains a second context block listing
   the user's closet items, with an instruction to prefer assembling outfits
   from what's already listed, only reaching for a generic suggestion when
@@ -212,6 +239,6 @@ app reads or writes it yet. The plan for v2:
   "you'd need to get this" items.
 
 Because `ClosetItem` already carries `userId` and a migration-safe shape,
-building this is additive work against `lib/gemini.ts` and a new route/page —
-it doesn't require touching `ChatMessage` or `Outfit`, and it doesn't require
-a migration against tables that already hold real data.
+building this is additive work against `lib/gemini.ts` and `OutfitCard.tsx` —
+it doesn't require touching `ChatMessage`, `Conversation`, or `Outfit`, and it
+doesn't require a migration against tables that already hold real data.

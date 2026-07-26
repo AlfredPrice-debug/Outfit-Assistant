@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { getOwnerId } from "./owner";
+import { getActiveConversationId } from "./conversation";
 import type { FinalOutfit } from "./schemas";
 import type { ChatTurn } from "./gemini";
 import type { ChatHistoryMessage } from "./apiTypes";
@@ -38,9 +38,9 @@ function parsePointer(content: string): AssistantPointer | null {
 // avoid repeating itself or to act on "make the second one warmer", without
 // spending tokens replaying rationale text it already generated once.
 export async function getRecentHistory(): Promise<ChatTurn[]> {
-  const userId = getOwnerId();
+  const conversationId = await getActiveConversationId();
   const rows = await prisma.chatMessage.findMany({
-    where: { userId },
+    where: { conversationId },
     orderBy: { createdAt: "desc" },
     take: HISTORY_LIMIT,
   });
@@ -57,9 +57,9 @@ export async function getRecentHistory(): Promise<ChatTurn[]> {
 }
 
 export async function listChatMessages(): Promise<ChatHistoryMessage[]> {
-  const userId = getOwnerId();
+  const conversationId = await getActiveConversationId();
   const rows = await prisma.chatMessage.findMany({
-    where: { userId },
+    where: { conversationId },
     orderBy: { createdAt: "asc" },
   });
 

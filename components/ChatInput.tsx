@@ -115,7 +115,7 @@ export function ChatInput({
               onSubmit(e);
             }
           }}
-          placeholder="e.g. summer outfit ideas for a coffee date"
+          placeholder="How can I OutFit you?"
           disabled={disabled}
           className="min-h-[2.75rem] flex-1 resize-none rounded-card border border-brass bg-porcelain px-4 py-3 font-body text-body text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool disabled:opacity-50"
         />
