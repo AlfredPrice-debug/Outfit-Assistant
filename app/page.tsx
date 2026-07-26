@@ -66,6 +66,16 @@ const THINKING_MESSAGES = [
   "Asking the mirror for a second opinion…",
   "Trying on look number 47…",
   "Googling \"does this match\"…",
+  "Wrestling a stubborn zipper…",
+  "Blaming the lighting in here…",
+  "Consulting a very judgmental cat…",
+  "Ironing out a few wrinkles, literally…",
+  "Pretending to know what \"business casual\" means…",
+  "Doing math with belt holes…",
+  "Convincing itself cargo pants are back…",
+  "Losing a sock to the dryer, again…",
+  "Overthinking a scarf…",
+  "Channeling main character energy…",
 ];
 
 function formatOutfitsAsText(outfits: OutfitWithId[]): string {

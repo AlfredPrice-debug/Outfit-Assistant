@@ -14,9 +14,25 @@ const LAYER_LABELS: Record<"top" | "bottom" | "outerwear" | "shoes", string> = {
 
 const SWIPE_THRESHOLD = 120;
 
+// Card background falls back to butter (the design system's card color) when
+// an outfit somehow has no color story, which the schema otherwise forbids.
+const FALLBACK_CARD_HEX = "#EFC673";
+
 interface SwipeHistoryEntry {
   id: string;
   direction: "left" | "right";
+}
+
+// Relative luminance (WCAG) of a #rrggbb hex string, used to pick readable
+// text over whatever color the outfit's own palette gives the card.
+function relativeLuminance(hex: string): number {
+  const channels = hex.replace("#", "").match(/.{2}/g)?.map((h) => parseInt(h, 16) / 255) ?? [1, 1, 1];
+  const [r = 1, g = 1, b = 1] = channels.map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function readableTextColor(backgroundHex: string): string {
+  return relativeLuminance(backgroundHex) > 0.45 ? "#2A211C" /* espresso */ : "#FFFFFF" /* porcelain */;
 }
 
 // Drag-to-decide card, used by SwipeableOutfitStack for the top (interactive)
@@ -57,7 +73,7 @@ function DraggableOutfitPreview({
             }
           : { scale: 1, y: 0, opacity: 1, transition: { duration: 0.2, ease: "easeOut" } }
       }
-      className="absolute inset-0 cursor-grab active:cursor-grabbing"
+      className="absolute inset-0 z-10 cursor-grab active:cursor-grabbing"
     >
       <OutfitPreviewCard outfit={outfit} />
       <motion.span
@@ -81,8 +97,18 @@ function OutfitPreviewCard({ outfit }: { outfit: OutfitWithId }) {
     .map((key) => [key, outfit.itemsByLayer[key]] as const)
     .filter(([, value]) => value !== null && value !== undefined);
 
+  // The card itself takes on the outfit's own lead color, rather than the
+  // fixed design-system card color, so the stack visually matches what
+  // each look actually looks like. Text switches to whichever of the two
+  // brand neutrals stays readable against that color.
+  const backgroundHex = outfit.colorStory[0]?.hex ?? FALLBACK_CARD_HEX;
+  const textColor = readableTextColor(backgroundHex);
+
   return (
-    <article className="flex h-full w-full select-none flex-col overflow-hidden rounded-card bg-butter shadow-card">
+    <article
+      style={{ backgroundColor: backgroundHex, color: textColor }}
+      className="flex h-full w-full select-none flex-col overflow-hidden rounded-card shadow-card"
+    >
       <div
         className="flex h-8 w-full shrink-0"
         role="img"
@@ -93,19 +119,19 @@ function OutfitPreviewCard({ outfit }: { outfit: OutfitWithId }) {
         ))}
       </div>
       <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
-        <h3 className="font-display text-title text-espresso">{outfit.title}</h3>
-        <p className="font-utility text-utility uppercase text-espresso">
+        <h3 className="font-display text-title">{outfit.title}</h3>
+        <p className="font-utility text-utility uppercase">
           {outfit.occasion} · {outfit.season}
         </p>
         <dl className="flex flex-col gap-1.5">
           {layerEntries.map(([key, value]) => (
             <div key={key} className="flex gap-3">
-              <dt className="w-24 shrink-0 font-utility text-utility uppercase text-espresso">{LAYER_LABELS[key]}</dt>
-              <dd className="font-body text-small text-espresso">{value}</dd>
+              <dt className="w-24 shrink-0 font-utility text-utility uppercase">{LAYER_LABELS[key]}</dt>
+              <dd className="font-body text-small">{value}</dd>
             </div>
           ))}
         </dl>
-        <p className="font-body text-small text-espresso">{outfit.rationale}</p>
+        <p className="font-body text-small">{outfit.rationale}</p>
       </div>
     </article>
   );
@@ -162,11 +188,17 @@ export function SwipeableOutfitStack({
         <AnimatePresence>
           {remaining.slice(0, 2).map((outfit, i) => {
             const isTop = i === 0;
+            // Neither card sets a CSS position offset the browser would use
+            // to order them, so without an explicit z-index the *later*
+            // sibling (the non-interactive card behind) paints over the
+            // interactive top card and swallows its drag/click events.
+            const zIndex = 2 - i;
             if (!isTop) {
               return (
                 <div
                   key={outfit.id}
-                  className="absolute inset-0 scale-[0.95] translate-y-3 opacity-70"
+                  style={{ zIndex }}
+                  className="absolute inset-0 scale-[0.95] translate-y-3"
                   aria-hidden="true"
                 >
                   <OutfitPreviewCard outfit={outfit} />
