@@ -56,17 +56,6 @@ export type InspirationLink = z.infer<typeof inspirationLinkSchema>;
 export type FinalOutfit = z.infer<typeof finalOutfitSchema>;
 export type FinalResponse = z.infer<typeof finalResponseSchema>;
 
-// A photo attached to one chat turn (e.g. a garment to build outfits around).
-// Sent to Gemini as inline image data for that turn only, never persisted,
-// since this app has no object storage and the image only matters once.
-// ~5.5MB base64 ceiling keeps a single upload from ballooning the request.
-export const attachedImageSchema = z.object({
-  mimeType: z.enum(["image/jpeg", "image/png", "image/webp"]),
-  data: z.string().min(1).max(7_500_000),
-});
-
-export type AttachedImage = z.infer<typeof attachedImageSchema>;
-
 // What you log on the "My closet" section of the profile page. A fixed
 // category set (rather than free text) matches the layers outfits are
 // already organized by, so a future closet-aware prompt (see README's

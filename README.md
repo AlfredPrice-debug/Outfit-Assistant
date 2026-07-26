@@ -1,7 +1,7 @@
 # OutFit Me
 
-A single-user web app that turns a plain-language request — "summer outfit
-ideas for a coffee date" — into three concrete, wearable outfit suggestions,
+A single-user web app that turns a plain-language request, "summer outfit
+ideas for a coffee date", into three concrete, wearable outfit suggestions,
 each with real inspiration links. No video feed to reverse-engineer, no
 scrolling: you describe an occasion and get back an outfit you can actually
 put together from clothes you likely already own.
@@ -13,21 +13,16 @@ results so the inspiration links are real pages, not invented URLs. See
 
 ## What it does
 
-- **Chat.** Describe an occasion, season, or vibe — optionally with a photo
-  of a garment attached — and get three outfit cards back, streamed in as
-  they generate.
+- **Chat.** Describe an occasion, season, or vibe and get three outfit cards
+  back, streamed in as they generate.
 - **Outfit cards.** Each opens with a color story bar (the outfit's actual
   garment colors), then the title, items grouped by layer as text, a short
   rationale, and up to two inspiration links styled as buttons that open in
   a new tab.
-- **Photo input.** Attach a photo of a piece you own (via the image icon in
-  the chat input) and Gemini builds at least one outfit around it. The photo
-  is compressed client-side and sent for that one request only — it's never
-  stored, so it won't reappear after a reload.
-- **Outfit MC.** The assistant has a name and a persona: she introduces
-  herself at the start of every new chat. Pick her headshot (6 options) and
-  your own avatar (18 options) on the profile page (saved to this browser
-  only — see [Data model](#data-model)).
+- **Outfit MC.** The assistant has a name and a persona: a real chat bubble
+  from her opens every new conversation, asking what you'd like help with.
+  Pick her headshot (6 options) and your own avatar (18 options) on the
+  profile page (saved to this browser only, see [Data model](#data-model)).
 - **My closet.** Log what you already own (category, color, description) on
   the profile page. Nothing reads this yet — see
   [Planned for v2](#planned-for-v2-closet-awareness) — but it's there to log
@@ -142,16 +137,6 @@ in this app. The link still resolves to a real page — it's just a redirect,
 not a direct link — so it satisfies "never fabricate a URL" without being the
 prettiest possible URL to show a user.
 
-## Multimodal input
-
-The chat input's photo icon lets you attach a picture of a garment. It's
-downscaled and compressed to a small JPEG in the browser
-(`lib/client/compressImage.ts`) before it ever leaves the device, then sent
-as inline image data alongside the text for that one Gemini call only — it
-is never written to the database, so it won't reappear after a reload (this
-app has no object storage; see `attachedImageSchema` in `lib/schemas.ts` for
-the size/type limits enforced server-side too).
-
 ## Avatars
 
 `lib/avatars.ts` is the source of truth for every avatar in the app. Both
@@ -188,11 +173,12 @@ fails the same way.
 ## Sidebar and new chat
 
 `components/Sidebar.tsx` is a slide-out drawer, toggled by the hamburger
-button in the sticky header, present on every page. It holds the app's real
-navigation: "Start new chat", "Profile", and "Chat history". Starting a new
-chat calls `POST /api/conversations`, which archives the current
+button in the fixed header, present on every page. It holds the app's real
+navigation: "Chat" (back to whatever conversation is currently active, no
+side effects), "Start new chat", "Profile", and "Chat history". Starting a
+new chat calls `POST /api/conversations`, which archives the current
 `Conversation` row and creates a new one (see [Data model](#data-model)),
-then does a full page navigation back to `/` — a plain client-side route
+then does a full page navigation back to `/`, a plain client-side route
 push wouldn't re-run the chat page's history fetch since it only runs once,
 on mount.
 

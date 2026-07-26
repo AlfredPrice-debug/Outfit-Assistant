@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { NavHeader } from "@/components/NavHeader";
-import { ChatInput, type PendingImage } from "@/components/ChatInput";
+import { ChatInput } from "@/components/ChatInput";
 import { OutfitCard, type OutfitWithId } from "@/components/OutfitCard";
 import { Avatar } from "@/components/Avatar";
 import { MessageActions } from "@/components/MessageActions";
@@ -13,7 +13,7 @@ import type { ChatStreamEvent } from "@/lib/streamEvents";
 import type { ChatHistoryMessage } from "@/lib/apiTypes";
 
 type UIMessage =
-  | { id: string; role: "user"; content: string; imagePreviewUrl?: string }
+  | { id: string; role: "user"; content: string }
   | { id: string; role: "assistant"; outfits: OutfitWithId[]; sourceMessage: string }
   | { id: string; role: "assistant-error"; content: string; sourceMessage: string };
 
@@ -103,7 +103,7 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, pending]);
 
-  async function sendMessage(text: string, image?: PendingImage) {
+  async function sendMessage(text: string) {
     setBanner(null);
     setMessages((prev) => [
       ...prev,
@@ -111,7 +111,6 @@ export default function ChatPage() {
         id: `local-${prev.length}-${text.slice(0, 8)}`,
         role: "user",
         content: text,
-        imagePreviewUrl: image?.previewUrl,
       },
     ]);
     setThinkingIndex(Math.floor(Math.random() * THINKING_MESSAGES.length));
@@ -121,10 +120,7 @@ export default function ChatPage() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: text,
-          ...(image ? { image: { mimeType: image.mimeType, data: image.data } } : {}),
-        }),
+        body: JSON.stringify({ message: text }),
       });
 
       if (!res.ok || !res.body) {
@@ -209,39 +205,22 @@ export default function ChatPage() {
           </div>
         )}
 
-        {isEmpty && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-6 py-8 text-center">
-            <Avatar src={assistantAvatarSrc} size={72} label="Outfit MC" />
-            <div className="max-w-xs font-body text-body text-espresso">
-              <p className="font-display text-title text-espresso">Hi, I&apos;m Outfit MC.</p>
-              <p className="mt-2">
-                I put together outfit ideas for any occasion, season, or vibe, with real inspiration links attached.
-              </p>
-              <p className="mt-2">
-                Tell me what you&apos;re dressing for, or attach a photo of a piece you want to build around, and
-                I&apos;ll get you started with three looks.
-              </p>
-            </div>
-          </div>
-        )}
-
         <ul className="flex flex-col gap-6">
+          {isEmpty && (
+            <li className="flex flex-col gap-3">
+              <Avatar src={assistantAvatarSrc} label="Outfit MC" />
+              <div className="max-w-[85%] rounded-card border border-brass bg-butter px-4 py-3 font-body text-body text-espresso shadow-card">
+                Hi, I&apos;m Outfit MC! What would you like me to help you with today?
+              </div>
+            </li>
+          )}
+
           {messages.map((message) => (
             <li key={message.id}>
               {message.role === "user" && (
                 <div className="ml-auto flex max-w-[85%] items-end justify-end gap-2">
-                  <div className="flex flex-col items-end gap-2">
-                    {message.imagePreviewUrl && (
-                      // eslint-disable-next-line @next/next/no-img-element -- transient client-side preview, not an optimizable asset
-                      <img
-                        src={message.imagePreviewUrl}
-                        alt="Photo you attached"
-                        className="h-24 w-24 rounded-card border border-brass object-cover"
-                      />
-                    )}
-                    <div className="rounded-card bg-amber px-4 py-3 font-body text-body text-espresso shadow-card">
-                      {message.content}
-                    </div>
+                  <div className="rounded-card bg-amber px-4 py-3 font-body text-body text-espresso shadow-card">
+                    {message.content}
                   </div>
                   <Avatar src={userAvatarSrc} label="You" />
                 </div>

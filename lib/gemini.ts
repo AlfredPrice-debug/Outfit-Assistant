@@ -1,11 +1,5 @@
-import { GoogleGenAI, ApiError, type Content, type GroundingChunk, type Part } from "@google/genai";
-import {
-  modelResponseSchema,
-  finalResponseSchema,
-  type FinalResponse,
-  type InspirationLink,
-  type AttachedImage,
-} from "./schemas";
+import { GoogleGenAI, ApiError, type Content, type GroundingChunk } from "@google/genai";
+import { modelResponseSchema, finalResponseSchema, type FinalResponse, type InspirationLink } from "./schemas";
 import {
   GeminiConfigError,
   GeminiRateLimitError,
@@ -61,7 +55,6 @@ Rules:
 - Describe garments generically (e.g. "white linen button-down", "cropped wide-leg jeans"). Never name a brand or retailer.
 - Do not include an "inspirationLinks" field; that is attached separately.
 - "colorStory" has 3 to 5 entries, one per significant garment color in that outfit. Every "hex" must be a valid 6-digit hex code, and every entry must correspond to a color actually named or implied by that outfit's item descriptions. Never invent a color that doesn't appear in the outfit.
-- If the user attaches a photo of a garment, look at it and build at least one of the three outfits around that actual item. Describe the pictured item generically (as you would any garment) rather than guessing a brand, and let its real color(s) drive that outfit's colorStory.
 - Do not wrap the JSON in markdown fences or add any surrounding text.
 - Never use an em dash (—) anywhere in your response. Use a comma, period, or parentheses instead.`;
 
@@ -69,19 +62,13 @@ const RETRY_SYSTEM_INSTRUCTION = `${SYSTEM_INSTRUCTION}
 
 Your previous response failed validation. This time, output ONLY the raw JSON object described above. No markdown fences, no leading or trailing text, no explanation. The entire response body must be valid JSON.`;
 
-function toContents(history: ChatTurn[], message: string, image?: AttachedImage): Content[] {
+function toContents(history: ChatTurn[], message: string): Content[] {
   const contents: Content[] = history.map((turn) => ({
     // Gemini's API calls the assistant role "model", not "assistant".
     role: turn.role === "user" ? "user" : "model",
     parts: [{ text: turn.content }],
   }));
-  // The image only ever applies to the live turn, it's never persisted, so
-  // it can't appear in `history` for a later message anyway.
-  const parts: Part[] = [{ text: message }];
-  if (image) {
-    parts.push({ inlineData: { mimeType: image.mimeType, data: image.data } });
-  }
-  contents.push({ role: "user", parts });
+  contents.push({ role: "user", parts: [{ text: message }] });
   return contents;
 }
 
@@ -226,7 +213,6 @@ export async function generateOutfits(
   history: ChatTurn[],
   message: string,
   onEvent: (event: GenerationEvent) => void,
-  image?: AttachedImage,
 ): Promise<GenerateOutfitsResult> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -234,7 +220,7 @@ export async function generateOutfits(
   }
 
   const ai = new GoogleGenAI({ apiKey });
-  const contents = toContents(history, message, image);
+  const contents = toContents(history, message);
 
   const attempt = async (systemInstruction: string) => {
     const onChunk = (text: string) => onEvent({ type: "chunk", text });

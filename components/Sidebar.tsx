@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { MenuIcon, XIcon, PlusIcon, UserIcon, HistoryIcon } from "lucide-react";
+import { MenuIcon, XIcon, PlusIcon, MessageCircleIcon, UserIcon, HistoryIcon } from "lucide-react";
 
 export function Sidebar({ current }: { current: "chat" | "saved" | "profile" | "history" }) {
   const [open, setOpen] = useState(false);
@@ -70,6 +70,11 @@ export function Sidebar({ current }: { current: "chat" | "saved" | "profile" | "
               <XIcon className="size-5" aria-hidden="true" />
             </button>
           </div>
+
+          <Link href="/" onClick={() => setOpen(false)} className={linkClasses(current === "chat")}>
+            <MessageCircleIcon className="size-5" aria-hidden="true" />
+            Chat
+          </Link>
 
           <button
             type="button"
