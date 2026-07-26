@@ -1,5 +1,11 @@
 import { GoogleGenAI, ApiError, type Content, type GroundingChunk } from "@google/genai";
-import { modelResponseSchema, finalResponseSchema, type FinalResponse, type InspirationLink } from "./schemas";
+import {
+  modelResponseSchema,
+  finalResponseSchema,
+  type FinalResponse,
+  type InspirationLink,
+  type ClosetCategory,
+} from "./schemas";
 import {
   GeminiConfigError,
   GeminiRateLimitError,
@@ -20,10 +26,27 @@ export interface ChatTurn {
   content: string;
 }
 
+// A closet item as passed in from the caller (app/api/chat/route.ts), kept
+// dependency-free of Prisma's generated types since this module has no
+// business knowing about the database shape, only the prompt-relevant one.
+export interface ClosetContextItem {
+  category: ClosetCategory;
+  colorName: string;
+  description: string;
+}
+
+const CLOSET_CATEGORY_LABELS: Record<ClosetCategory, string> = {
+  top: "Top",
+  bottom: "Bottom",
+  outerwear: "Outerwear",
+  shoes: "Shoes",
+  accessory: "Accessory",
+};
+
 // A JSON contract without inspirationLinks: the model is never asked for
 // URLs, so it can never be the source of a fabricated one. Real links are
 // spliced in afterward from Google Search grounding metadata.
-const SYSTEM_INSTRUCTION = `You are Outfit MC, a stylist that turns a short request (an occasion, season, or vibe) into concrete outfit ideas the user can put together from clothes they likely already own.
+const BASE_SYSTEM_INSTRUCTION = `You are Outfit MC, a stylist that turns a short request (an occasion, season, or vibe) into concrete outfit ideas the user can put together from clothes they likely already own.
 
 Use Google Search to ground your suggestions in current, real fashion context.
 
@@ -58,9 +81,30 @@ Rules:
 - Do not wrap the JSON in markdown fences or add any surrounding text.
 - Never use an em dash (—) anywhere in your response. Use a comma, period, or parentheses instead.`;
 
-const RETRY_SYSTEM_INSTRUCTION = `${SYSTEM_INSTRUCTION}
+// Appended only when the user has actually logged something, so a closet-less
+// request looks exactly like it did before this feature existed.
+function buildClosetSection(closetItems: ClosetContextItem[]): string {
+  if (closetItems.length === 0) return "";
+  const lines = closetItems
+    .map((item) => `- ${CLOSET_CATEGORY_LABELS[item.category]}: ${item.colorName} ${item.description}`)
+    .join("\n");
+  return `
+
+The user's own closet (garments they already own):
+${lines}
+
+When one of these genuinely fits the look, reuse it directly by name in "itemsByLayer" or "accessories" instead of inventing a similar new piece. Still suggest new pieces from anywhere else to complete each outfit; don't force an owned item in if it doesn't fit, and don't limit every outfit to only what's listed here.`;
+}
+
+function buildSystemInstruction(closetItems: ClosetContextItem[]): string {
+  return `${BASE_SYSTEM_INSTRUCTION}${buildClosetSection(closetItems)}`;
+}
+
+function buildRetrySystemInstruction(closetItems: ClosetContextItem[]): string {
+  return `${buildSystemInstruction(closetItems)}
 
 Your previous response failed validation. This time, output ONLY the raw JSON object described above. No markdown fences, no leading or trailing text, no explanation. The entire response body must be valid JSON.`;
+}
 
 function toContents(history: ChatTurn[], message: string): Content[] {
   const contents: Content[] = history.map((turn) => ({
@@ -213,6 +257,7 @@ export async function generateOutfits(
   history: ChatTurn[],
   message: string,
   onEvent: (event: GenerationEvent) => void,
+  closetItems: ClosetContextItem[] = [],
 ): Promise<GenerateOutfitsResult> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -238,7 +283,7 @@ export async function generateOutfits(
   };
 
   try {
-    return await attempt(SYSTEM_INSTRUCTION);
+    return await attempt(buildSystemInstruction(closetItems));
   } catch (err) {
     if (
       err instanceof GeminiConfigError ||
@@ -251,7 +296,7 @@ export async function generateOutfits(
     // Retry once with a stricter instruction before giving up.
     onEvent({ type: "retry" });
     try {
-      return await attempt(RETRY_SYSTEM_INSTRUCTION);
+      return await attempt(buildRetrySystemInstruction(closetItems));
     } catch {
       throw new GeminiMalformedOutputError();
     }

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { NavHeader } from "@/components/NavHeader";
 import { OutfitCard, type OutfitWithId } from "@/components/OutfitCard";
+import { AskOutfitMC } from "@/components/AskOutfitMC";
 
 export default function SavedPage() {
   const [outfits, setOutfits] = useState<OutfitWithId[] | null>(null);
@@ -119,6 +120,7 @@ export default function SavedPage() {
           ))}
         </ul>
       </main>
+      <AskOutfitMC message="This is your Outfit Cards page, every look you've saved from chat lands here. Save one during a conversation and it'll show up right in this list, filterable by occasion or season." />
     </div>
   );
 }

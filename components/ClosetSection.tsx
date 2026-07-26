@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { Trash2Icon } from "lucide-react";
+import { ChevronDownIcon, Trash2Icon } from "lucide-react";
+import { Avatar } from "./Avatar";
+import { useAssistantAvatar } from "@/lib/client/useAssistantAvatar";
+import { getAssistantAvatar } from "@/lib/avatars";
 import type { ClosetCategory } from "@/lib/schemas";
 
 interface ClosetItem {
@@ -26,6 +29,9 @@ export function ClosetSection() {
   const [colorName, setColorName] = useState("");
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Set<ClosetCategory>>(new Set());
+  const { key: assistantKey } = useAssistantAvatar();
+  const assistantAvatarSrc = getAssistantAvatar(assistantKey).src;
 
   useEffect(() => {
     (async () => {
@@ -75,13 +81,29 @@ export function ClosetSection() {
     }
   }
 
+  function toggleCategory(cat: ClosetCategory) {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) {
+        next.delete(cat);
+      } else {
+        next.add(cat);
+      }
+      return next;
+    });
+  }
+
   return (
     <section className="flex flex-col gap-3">
       <h2 className="font-display text-title text-espresso">My closet</h2>
-      <p className="font-body text-body text-espresso">
-        Log what you already own. Outfit suggestions don&apos;t draw on this yet, but it&apos;s here for when they
-        do.
-      </p>
+      <div className="flex items-start gap-2 rounded-card border border-brass bg-butter px-4 py-3 shadow-card">
+        <Avatar src={assistantAvatarSrc} label="Outfit MC" />
+        <p className="font-body text-body text-espresso">
+          Log the tops, bottoms, outerwear, shoes, and accessories (even a watch) you already own. When you ask me
+          for outfit ideas in chat, I&apos;ll mix pieces from here in with new suggestions, so you get looks built
+          from what you have and what&apos;s worth adding.
+        </p>
+      </div>
 
       {error && (
         <p role="alert" className="font-body text-small text-espresso">
@@ -141,29 +163,54 @@ export function ClosetSection() {
       {items === null && !error && <p className="font-body text-small text-espresso">Loading…</p>}
       {items?.length === 0 && <p className="font-body text-small text-espresso">Nothing logged yet.</p>}
       {items && items.length > 0 && (
-        <ul className="flex flex-col gap-2">
-          {items.map((item) => (
-            <li
-              key={item.id}
-              className="flex items-center justify-between gap-2 rounded-small border border-brass px-3 py-2"
-            >
-              <span className="font-body text-small text-espresso">
-                <span className="font-utility text-utility uppercase text-deepPool">
-                  {CATEGORY_LABELS[item.category]}
-                </span>{" "}
-                {item.colorName} {item.description}
-              </span>
-              <button
-                type="button"
-                onClick={() => remove(item.id)}
-                aria-label={`Remove ${item.description}`}
-                className="shrink-0 rounded-full p-1.5 text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
-              >
-                <Trash2Icon className="size-4" aria-hidden="true" />
-              </button>
-            </li>
-          ))}
-        </ul>
+        <div className="flex flex-col gap-2">
+          {(Object.keys(CATEGORY_LABELS) as ClosetCategory[])
+            .map((cat) => ({ cat, categoryItems: items.filter((item) => item.category === cat) }))
+            .filter(({ categoryItems }) => categoryItems.length > 0)
+            .map(({ cat, categoryItems }) => {
+              const expanded = expandedCategories.has(cat);
+              return (
+                <div key={cat} className="rounded-card border border-brass">
+                  <button
+                    type="button"
+                    onClick={() => toggleCategory(cat)}
+                    aria-expanded={expanded}
+                    className="flex w-full items-center justify-between gap-2 rounded-card px-3 py-2.5 font-utility text-utility uppercase text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
+                  >
+                    <span>
+                      {CATEGORY_LABELS[cat]} ({categoryItems.length})
+                    </span>
+                    <ChevronDownIcon
+                      className={`size-4 shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`}
+                      aria-hidden="true"
+                    />
+                  </button>
+                  {expanded && (
+                    <ul className="flex flex-col gap-2 border-t border-brass p-2">
+                      {categoryItems.map((item) => (
+                        <li
+                          key={item.id}
+                          className="flex items-center justify-between gap-2 rounded-small border border-brass px-3 py-2"
+                        >
+                          <span className="font-body text-small text-espresso">
+                            {item.colorName} {item.description}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => remove(item.id)}
+                            aria-label={`Remove ${item.description}`}
+                            className="shrink-0 rounded-full p-1.5 text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
+                          >
+                            <Trash2Icon className="size-4" aria-hidden="true" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              );
+            })}
+        </div>
       )}
     </section>
   );

@@ -73,7 +73,9 @@ export function OutfitCard({
     .filter(([, value]) => value !== null && value !== undefined);
 
   return (
-    <article className="flex w-full flex-col overflow-hidden rounded-card bg-butter shadow-card">
+    // Gradient (not a flat fill) is what reads as a raised, lit card rather
+    // than a flat rectangle; both stops are locked-palette tokens.
+    <article className="flex w-full flex-col overflow-hidden rounded-card bg-gradient-to-br from-butter to-brass shadow-card">
       {/* Color story bar: the actual garment colors, so the user can scan
           whether they own something close before reading a word. Hex values
           come from the model, not the app palette (the one place a color
@@ -99,7 +101,7 @@ export function OutfitCard({
             title={isUnavailable ? "Unavailable while the database is down" : undefined}
             className="shrink-0 rounded-pill bg-amber px-4 py-2 font-utility text-utility uppercase text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool disabled:opacity-50"
           >
-            {isSaved ? "Remove from saved" : "Save this look"}
+            {isSaved ? "Remove OutFit Card" : "Save OutFit Card"}
           </button>
         </div>
 

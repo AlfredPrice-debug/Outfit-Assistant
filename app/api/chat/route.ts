@@ -3,9 +3,10 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getOwnerId } from "@/lib/owner";
 import { getActiveConversationId } from "@/lib/conversation";
-import { generateOutfits } from "@/lib/gemini";
+import { generateOutfits, type ClosetContextItem } from "@/lib/gemini";
 import { encodeAssistantContent, getRecentHistory, listChatMessages } from "@/lib/chatHistory";
 import type { ChatStreamEvent } from "@/lib/streamEvents";
+import type { ClosetCategory } from "@/lib/schemas";
 import {
   GeminiConfigError,
   GeminiRateLimitError,
@@ -54,6 +55,22 @@ export async function POST(req: NextRequest) {
     dbAvailable = false;
   }
 
+  // Best-effort: a closet lookup failing shouldn't block generation, it just
+  // means this request's suggestions won't reference anything the user owns.
+  // The column is a plain string (validated as a ClosetCategory only at
+  // write time, in /api/closet), so it's cast back on the way out.
+  let closetItems: ClosetContextItem[] = [];
+  try {
+    const rows = await prisma.closetItem.findMany({
+      where: { userId },
+      select: { category: true, colorName: true, description: true },
+      orderBy: { createdAt: "desc" },
+    });
+    closetItems = rows.map((row) => ({ ...row, category: row.category as ClosetCategory }));
+  } catch {
+    closetItems = [];
+  }
+
   if (dbAvailable) {
     try {
       await prisma.chatMessage.create({ data: { userId, conversationId, role: "user", content: message } });
@@ -75,10 +92,15 @@ export async function POST(req: NextRequest) {
       }
 
       try {
-        const { finalResponse } = await generateOutfits(history, message, (evt) => {
-          if (evt.type === "chunk") send({ type: "chunk", text: evt.text });
-          if (evt.type === "retry") send({ type: "retry" });
-        });
+        const { finalResponse } = await generateOutfits(
+          history,
+          message,
+          (evt) => {
+            if (evt.type === "chunk") send({ type: "chunk", text: evt.text });
+            if (evt.type === "retry") send({ type: "retry" });
+          },
+          closetItems,
+        );
 
         let outfitsWithIds: (typeof finalResponse.outfits[number] & { id: string; isSaved: boolean })[];
 
