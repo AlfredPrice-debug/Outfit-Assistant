@@ -1,13 +1,7 @@
 // Plain data, no "use client" needed, safe to import from server or client
 // components.
 
-export type AssistantAvatarKey =
-  | "blazer"
-  | "tablet"
-  | "thumbsup_red"
-  | "turtleneck"
-  | "leather_phone"
-  | "leopard_thumbsup";
+export type AssistantAvatarKey = "floral" | "rust";
 
 export interface AssistantAvatarOption {
   key: AssistantAvatarKey;
@@ -20,47 +14,25 @@ export interface AssistantAvatarOption {
 
 // Outfit MC, the assistant's persona. The user picks one look; its matching
 // thinking pose comes along with it automatically rather than being a
-// separate choice.
+// separate choice. This set replaces an earlier one whose source images
+// weren't cropped cleanly (see README); a third look (black turtleneck) is
+// pending its matching thinking-pose image.
 export const ASSISTANT_AVATARS: AssistantAvatarOption[] = [
   {
-    key: "blazer",
-    label: "Blazer",
-    src: "/avatars/outfitmc_blazer.png",
-    thinkingSrc: "/avatars/outfitmc_blazer_thinking.png",
+    key: "floral",
+    label: "Floral Wrap",
+    src: "/avatars/outfitmc_floral.png",
+    thinkingSrc: "/avatars/outfitmc_floral_thinking.png",
   },
   {
-    key: "tablet",
-    label: "Tablet",
-    src: "/avatars/outfitmc_tablet.png",
-    thinkingSrc: "/avatars/outfitmc_tablet_thinking.png",
-  },
-  {
-    key: "thumbsup_red",
-    label: "Red Blouse",
-    src: "/avatars/outfitmc_thumbsup_red.png",
-    thinkingSrc: "/avatars/outfitmc_thumbsup_red_thinking.png",
-  },
-  {
-    key: "turtleneck",
-    label: "Turtleneck",
-    src: "/avatars/outfitmc_turtleneck.png",
-    thinkingSrc: "/avatars/outfitmc_turtleneck_thinking.png",
-  },
-  {
-    key: "leather_phone",
-    label: "Leather Jacket",
-    src: "/avatars/outfitmc_leather_phone.png",
-    thinkingSrc: "/avatars/outfitmc_leather_phone_thinking.png",
-  },
-  {
-    key: "leopard_thumbsup",
-    label: "Leopard Print",
-    src: "/avatars/outfitmc_leopard_thumbsup.png",
-    thinkingSrc: "/avatars/outfitmc_leopard_thumbsup_thinking.png",
+    key: "rust",
+    label: "Rust Sweater",
+    src: "/avatars/outfitmc_rust.png",
+    thinkingSrc: "/avatars/outfitmc_rust_thinking.png",
   },
 ];
 
-export const DEFAULT_ASSISTANT_AVATAR_KEY: AssistantAvatarKey = "blazer";
+export const DEFAULT_ASSISTANT_AVATAR_KEY: AssistantAvatarKey = "floral";
 
 const ASSISTANT_AVATAR_BY_KEY = new Map(ASSISTANT_AVATARS.map((option) => [option.key, option]));
 

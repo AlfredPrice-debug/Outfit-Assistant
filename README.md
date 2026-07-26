@@ -21,8 +21,9 @@ results so the inspiration links are real pages, not invented URLs. See
   a new tab.
 - **Outfit MC.** The assistant has a name and a persona: a real chat bubble
   from her opens every new conversation, asking what you'd like help with.
-  Pick her headshot (6 options) and your own avatar (18 options) on the
-  profile page (saved to this browser only, see [Data model](#data-model)).
+  Pick her headshot (2 options, with a third pending) and your own avatar
+  (18 options) on the profile page (saved to this browser only, see
+  [Data model](#data-model)).
 - **My closet.** Log what you already own (category, color, description) on
   the profile page. Nothing reads this yet — see
   [Planned for v2](#planned-for-v2-closet-awareness) — but it's there to log
@@ -146,11 +147,16 @@ anywhere in the app:
 
 - **`USER_AVATARS`**: 18 illustrated character icons standing in for the
   human user, who has no profile photo in this app.
-- **`ASSISTANT_AVATARS`**: 6 looks for Outfit MC, the assistant's persona.
+- **`ASSISTANT_AVATARS`**: looks for Outfit MC, the assistant's persona
+  (currently 2: Floral Wrap, Rust Sweater; a third, black turtleneck, is
+  cropped and ready to add once its matching thinking-pose photo arrives).
   Each option is really a pair: a normal `src` and a matching `thinkingSrc`
-  cropped from a second sheet of the same look in a "thinking" pose. Picking
-  a look picks both at once, so the pending/thinking indicator always shows
-  the correct pose for whichever look is active, not a mismatched one.
+  from the same look in a "thinking" pose. Picking a look picks both at
+  once, so the pending/thinking indicator always shows the correct pose for
+  whichever look is active, not a mismatched one. An earlier 6-look set
+  (blazer, tablet, red blouse, gray turtleneck, leather jacket, leopard
+  print) was replaced outright rather than reprocessed: its source images
+  weren't cropped cleanly and the user provided a fresh set instead.
 
 Both choices are stored in `localStorage`, not the database. There's no
 `User` model to attach either to, and they're cosmetic enough not to need
