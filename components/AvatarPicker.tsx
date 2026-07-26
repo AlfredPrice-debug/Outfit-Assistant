@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Avatar, USER_SELECTABLE_POSES, type AvatarPose } from "./Avatar";
+import { Avatar } from "./Avatar";
+import { USER_AVATARS, getUserAvatar, type UserAvatarKey } from "@/lib/avatars";
 
 export function AvatarPicker({
-  pose,
+  avatarKey,
   onPick,
 }: {
-  pose: AvatarPose;
-  onPick: (pose: AvatarPose) => void;
+  avatarKey: UserAvatarKey;
+  onPick: (key: UserAvatarKey) => void;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -22,7 +23,7 @@ export function AvatarPicker({
         aria-label="Choose your avatar"
         className="rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
       >
-        <Avatar pose={pose} size={32} label="Your avatar" />
+        <Avatar src={getUserAvatar(avatarKey).src} size={32} label="Your avatar" />
       </button>
 
       {open && (
@@ -38,23 +39,23 @@ export function AvatarPicker({
           <div
             role="menu"
             aria-label="Avatar options"
-            className="absolute right-0 top-10 z-20 flex gap-2 rounded-card border border-brass bg-porcelain p-3 shadow-card"
+            className="absolute right-0 top-10 z-20 grid w-max max-w-[min(90vw,320px)] grid-cols-6 gap-2 rounded-card border border-brass bg-porcelain p-3 shadow-card"
           >
-            {USER_SELECTABLE_POSES.map((option) => (
+            {USER_AVATARS.map((option) => (
               <button
-                key={option}
+                key={option.key}
                 type="button"
                 role="menuitemradio"
-                aria-checked={option === pose}
+                aria-checked={option.key === avatarKey}
                 onClick={() => {
-                  onPick(option);
+                  onPick(option.key);
                   setOpen(false);
                 }}
-                className={`shrink-0 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool ${
-                  option === pose ? "ring-2 ring-deepPool" : ""
+                className={`rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool ${
+                  option.key === avatarKey ? "ring-2 ring-deepPool" : ""
                 }`}
               >
-                <Avatar pose={option} size={40} label={`Use the ${option} avatar`} />
+                <Avatar src={option.src} size={40} label={option.label} />
               </button>
             ))}
           </div>

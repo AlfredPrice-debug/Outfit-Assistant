@@ -9,6 +9,7 @@ import { Avatar } from "@/components/Avatar";
 import { AvatarPicker } from "@/components/AvatarPicker";
 import { MessageActions } from "@/components/MessageActions";
 import { useUserAvatar } from "@/lib/client/useUserAvatar";
+import { ASSISTANT_AVATARS, getUserAvatar } from "@/lib/avatars";
 import type { ChatStreamEvent } from "@/lib/streamEvents";
 import type { ChatHistoryMessage } from "@/lib/apiTypes";
 
@@ -57,7 +58,8 @@ export default function ChatPage() {
   const [thinkingIndex, setThinkingIndex] = useState(0);
   const [banner, setBanner] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const { pose: userPose, setPose: setUserPose } = useUserAvatar();
+  const { key: userAvatarKey, setKey: setUserAvatarKey } = useUserAvatar();
+  const userAvatarSrc = getUserAvatar(userAvatarKey).src;
 
   useEffect(() => {
     if (!pending || pending.retrying) return;
@@ -197,7 +199,7 @@ export default function ChatPage() {
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-porcelain">
-      <NavHeader current="chat" extra={<AvatarPicker pose={userPose} onPick={setUserPose} />} />
+      <NavHeader current="chat" extra={<AvatarPicker avatarKey={userAvatarKey} onPick={setUserAvatarKey} />} />
       <main className="flex flex-1 flex-col overflow-y-auto px-5 py-6">
         {banner && (
           <div role="alert" className="mb-4 rounded-small border border-brass bg-butter px-3 py-2 font-body text-small text-espresso">
@@ -207,7 +209,7 @@ export default function ChatPage() {
 
         {isEmpty && (
           <div className="flex flex-1 flex-col items-center justify-center gap-6 py-8 text-center">
-            <Avatar pose="greeting" size={72} label="Outfit Me" />
+            <Avatar src={ASSISTANT_AVATARS.greeting} size={72} label="Outfit Me" />
             <p className="max-w-xs font-body text-body text-espresso">
               Describe an occasion, season, or vibe — or attach a photo of a piece you want to build around — and get
               three outfit ideas with real inspiration links.
@@ -234,12 +236,12 @@ export default function ChatPage() {
                       {message.content}
                     </div>
                   </div>
-                  <Avatar pose={userPose} label="You" />
+                  <Avatar src={userAvatarSrc} label="You" />
                 </div>
               )}
               {message.role === "assistant" && (
                 <div className="flex flex-col gap-3">
-                  <Avatar pose="greeting" label="Outfit Me" />
+                  <Avatar src={ASSISTANT_AVATARS.greeting} label="Outfit Me" />
                   <div className="flex flex-col gap-6">
                     {message.outfits.map((outfit) => (
                       <OutfitCard key={outfit.id} outfit={outfit} />
@@ -253,7 +255,7 @@ export default function ChatPage() {
               )}
               {message.role === "assistant-error" && (
                 <div className="flex flex-col gap-3">
-                  <Avatar pose="greeting" label="Outfit Me" />
+                  <Avatar src={ASSISTANT_AVATARS.greeting} label="Outfit Me" />
                   <div
                     role="alert"
                     className="max-w-[85%] rounded-card border border-brass bg-butter px-4 py-3 font-body text-body text-espresso"
@@ -274,7 +276,7 @@ export default function ChatPage() {
 
           {pending && (
             <li aria-live="polite" className="flex flex-col gap-3">
-              <Avatar pose="thinking" label="Outfit Me" />
+              <Avatar src={ASSISTANT_AVATARS.thinking} label="Outfit Me" />
               <div className="max-w-[85%] rounded-card border border-brass bg-butter px-4 py-3 font-body text-body text-espresso">
                 {pending.retrying
                   ? "That didn't come back quite right — trying again…"

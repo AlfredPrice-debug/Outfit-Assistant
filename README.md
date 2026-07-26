@@ -25,8 +25,8 @@ results so the inspiration links are real pages, not invented URLs. See
   is compressed client-side and sent for that one request only — it's never
   stored, so it won't reappear after a reload.
 - **Avatars.** The assistant has a fixed illustrated avatar; pick your own
-  from a few options via the small avatar button in the header (saved to
-  this browser only — see [Data model](#data-model)).
+  from 18 illustrated character icons via the small avatar button in the
+  header (saved to this browser only — see [Data model](#data-model)).
 - **Save.** Toggle any outfit to save it; revisit it from the Saved outfits
   page, filterable by occasion and season, from any device.
 - **Persisted history.** Your conversation survives a reload and a redeploy.
@@ -131,12 +131,16 @@ the size/type limits enforced server-side too).
 
 ## Avatars
 
-`components/Avatar.tsx` crops five poses from one illustrated character
-sheet. The assistant's avatar is fixed (a calm pose for normal replies, a
-"thinking" pose while generating); the other three poses are offered to the
-user as a stand-in profile picture via the avatar button in the header. That
-choice is stored in `localStorage`, not the database — there's no `User`
-model to attach it to, and it's cosmetic enough not to need one.
+`lib/avatars.ts` is the source of truth for every avatar in the app. The
+assistant's avatar is fixed — a calm pose for normal replies, a distinct
+"thinking" pose while generating — cropped from one illustrated character
+sheet (`ASSISTANT_AVATARS`). The user picks their own stand-in profile
+picture from a set of 18 illustrated character icons (`USER_AVATARS`) via the
+avatar button in the header; the choice is stored in `localStorage`, not the
+database — there's no `User` model to attach it to, and it's cosmetic enough
+not to need one. Every visible chat bubble reflects the *current* choice
+(not a per-message snapshot), so switching avatars re-skins the whole
+conversation on screen immediately, not just future messages.
 
 One gotcha worth documenting: `next/image` optimizes local images by
 internally re-running the request through this app's own middleware —
