@@ -24,7 +24,31 @@ type UIMessage =
       // conversation-mode messages render the plain static list instead.
       swipeState?: { kept: string[]; discarded: string[] };
     }
-  | { id: string; role: "assistant-error"; content: string; sourceMessage: string };
+  | { id: string; role: "assistant-error"; content: string; sourceMessage: string }
+  // Plain Outfit MC text bubbles that aren't outfit results: the intro, the
+  // conversation/swipe question, and the follow-up prompt. `choices` is only
+  // present on the mode question, and only rendered while chatMode is unset.
+  | {
+      id: string;
+      role: "assistant-note";
+      content: string;
+      choices?: { label: string; mode: "conversation" | "swipe" }[];
+    };
+
+function buildIntroMessages(): UIMessage[] {
+  return [
+    { id: "intro", role: "assistant-note", content: "Hi, I'm Outfit MC!" },
+    {
+      id: "mode-question",
+      role: "assistant-note",
+      content: "How do you want to share your outfits?",
+      choices: [
+        { label: "Let me swipe!", mode: "swipe" },
+        { label: "Let's talk", mode: "conversation" },
+      ],
+    },
+  ];
+}
 
 interface PendingState {
   retrying: boolean;
@@ -97,7 +121,7 @@ export default function ChatPage() {
           }
           return { id: m.id, role: "assistant", outfits: m.outfits ?? [], sourceMessage: lastUserText };
         });
-        setMessages(loaded);
+        setMessages(loaded.length > 0 ? loaded : buildIntroMessages());
       } catch {
         if (!cancelled) setBanner("Couldn't load chat history. The database may be unavailable.");
       } finally {
@@ -126,6 +150,16 @@ export default function ChatPage() {
         };
       }),
     );
+  }
+
+  function handleModeChoice(mode: "conversation" | "swipe", label: string) {
+    if (chatMode !== null) return;
+    setChatMode(mode);
+    setMessages((prev) => [
+      ...prev,
+      { id: `mode-answer-${prev.length}`, role: "user", content: label },
+      { id: `ideas-question-${prev.length + 1}`, role: "assistant-note", content: "What ideas are you looking for?" },
+    ]);
   }
 
   function handleSwipeUndo(messageId: string, outfitId: string) {
@@ -244,8 +278,6 @@ export default function ChatPage() {
     }
   }
 
-  const isEmpty = !loadingHistory && messages.length === 0 && !pending;
-
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-porcelain pt-16">
       <NavHeader current="chat" />
@@ -257,40 +289,34 @@ export default function ChatPage() {
         )}
 
         <ul className="flex flex-col gap-6">
-          {isEmpty && (
-            <li className="flex flex-col gap-3">
-              <Avatar src={assistantAvatarSrc} label="Outfit MC" />
-              <div className="max-w-[85%] rounded-card border border-brass bg-butter px-4 py-3 font-body text-body text-espresso shadow-card">
-                Hi, I&apos;m Outfit MC! What would you like me to help you with today?
-              </div>
-              {chatMode === null && (
-                <>
-                  <div className="max-w-[85%] rounded-card border border-brass bg-butter px-4 py-3 font-body text-body text-espresso shadow-card">
-                    Would you like to have a conversation or swipe for your outfit ideas?
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setChatMode("swipe")}
-                      className="rounded-pill bg-amber px-4 py-2 font-utility text-utility uppercase text-espresso shadow-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
-                    >
-                      Let me swipe!
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setChatMode("conversation")}
-                      className="rounded-pill border border-brass px-4 py-2 font-utility text-utility uppercase text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
-                    >
-                      Let&apos;s talk
-                    </button>
-                  </div>
-                </>
-              )}
-            </li>
-          )}
-
           {messages.map((message) => (
             <li key={message.id}>
+              {message.role === "assistant-note" && (
+                <div className="flex flex-col gap-3">
+                  <Avatar src={assistantAvatarSrc} label="Outfit MC" />
+                  <div className="max-w-[85%] rounded-card border border-brass bg-butter px-4 py-3 font-body text-body text-espresso shadow-card">
+                    {message.content}
+                  </div>
+                  {message.choices && chatMode === null && (
+                    <div className="flex gap-2">
+                      {message.choices.map((choice) => (
+                        <button
+                          key={choice.mode}
+                          type="button"
+                          onClick={() => handleModeChoice(choice.mode, choice.label)}
+                          className={
+                            choice.mode === "swipe"
+                              ? "rounded-pill bg-amber px-4 py-2 font-utility text-utility uppercase text-espresso shadow-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
+                              : "rounded-pill border border-brass px-4 py-2 font-utility text-utility uppercase text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
+                          }
+                        >
+                          {choice.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               {message.role === "user" && (
                 <div className="ml-auto flex max-w-[85%] items-end justify-end gap-2">
                   <div className="rounded-card bg-amber px-4 py-3 font-body text-body text-espresso shadow-card">
