@@ -1,10 +1,39 @@
-// Plain data — no "use client" needed, safe to import from server or client
-// components. The assistant's two poses are fixed; the user avatars are the
-// full set the user picked to stand in for a profile photo they don't have.
-export const ASSISTANT_AVATARS = {
-  greeting: "/avatars/greeting.png",
-  thinking: "/avatars/thinking.png",
-} as const;
+// Plain data, no "use client" needed, safe to import from server or client
+// components.
+
+export type AssistantAvatarKey =
+  | "blazer"
+  | "tablet"
+  | "thumbsup_red"
+  | "turtleneck"
+  | "leather_phone"
+  | "leopard_thumbsup";
+
+export interface AssistantAvatarOption {
+  key: AssistantAvatarKey;
+  label: string;
+  src: string;
+}
+
+// Outfit MC, the assistant's persona. The user picks one headshot to
+// represent her everywhere she appears (empty state, chat bubbles, the
+// thinking indicator) rather than the app assigning a pose per state.
+export const ASSISTANT_AVATARS: AssistantAvatarOption[] = [
+  { key: "blazer", label: "Blazer", src: "/avatars/outfitmc_blazer.png" },
+  { key: "tablet", label: "Tablet", src: "/avatars/outfitmc_tablet.png" },
+  { key: "thumbsup_red", label: "Red Blouse", src: "/avatars/outfitmc_thumbsup_red.png" },
+  { key: "turtleneck", label: "Turtleneck", src: "/avatars/outfitmc_turtleneck.png" },
+  { key: "leather_phone", label: "Leather Jacket", src: "/avatars/outfitmc_leather_phone.png" },
+  { key: "leopard_thumbsup", label: "Leopard Print", src: "/avatars/outfitmc_leopard_thumbsup.png" },
+];
+
+export const DEFAULT_ASSISTANT_AVATAR_KEY: AssistantAvatarKey = "blazer";
+
+const ASSISTANT_AVATAR_BY_KEY = new Map(ASSISTANT_AVATARS.map((option) => [option.key, option]));
+
+export function getAssistantAvatar(key: AssistantAvatarKey): AssistantAvatarOption {
+  return ASSISTANT_AVATAR_BY_KEY.get(key) ?? ASSISTANT_AVATAR_BY_KEY.get(DEFAULT_ASSISTANT_AVATAR_KEY)!;
+}
 
 export type UserAvatarKey =
   | "owl"

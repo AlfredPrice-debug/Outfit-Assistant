@@ -27,7 +27,7 @@ export function ChatInput({
     onSend(trimmed, image ?? undefined);
     setValue("");
     // The sent message keeps this object URL to render its own thumbnail, so
-    // only the input's reference to it is cleared here — revoking it now
+    // only the input's reference to it is cleared here; revoking it now
     // would break that just-sent bubble's image immediately.
     setImage(null);
   }

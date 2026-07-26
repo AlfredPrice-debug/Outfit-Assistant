@@ -8,7 +8,7 @@ import { SESSION_COOKIE_NAME, verifySessionValue } from "@/lib/session";
 // health checker, which never carries our cookie.
 //
 // Any static file under /public (avatars, clothing icons, future additions)
-// is excluded too — next/image's optimizer fetches local images by
+// is excluded too, since next/image's optimizer fetches local images by
 // internally re-running the request through this same middleware with no
 // cookie attached, so without this every optimized image 400s in
 // production. Matching "has a file extension" once, instead of listing each

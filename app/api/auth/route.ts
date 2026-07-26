@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "A passcode is required." }, { status: 400 });
   }
 
-  // Never log `parsed.data.passcode` — not here, not in an error handler above.
+  // Never log `parsed.data.passcode`, not here, not in an error handler above.
   const isMatch = await passcodesMatch(parsed.data.passcode, appPasscode);
   if (!isMatch) {
     return NextResponse.json({ error: "Incorrect passcode." }, { status: 401 });

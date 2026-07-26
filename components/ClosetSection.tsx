@@ -71,7 +71,7 @@ export function ClosetSection() {
       if (!res.ok) throw new Error();
     } catch {
       setItems(prev ?? null);
-      setError("Couldn't remove that item — try again.");
+      setError("Couldn't remove that item. Try again.");
     }
   }
 
@@ -79,7 +79,7 @@ export function ClosetSection() {
     <section className="flex flex-col gap-3">
       <h2 className="font-display text-title text-espresso">My closet</h2>
       <p className="font-body text-body text-espresso">
-        Log what you already own — outfit suggestions don&apos;t draw on this yet, but it&apos;s here for when they
+        Log what you already own. Outfit suggestions don&apos;t draw on this yet, but it&apos;s here for when they
         do.
       </p>
 

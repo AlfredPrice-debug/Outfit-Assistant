@@ -5,7 +5,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // The full palette, and nothing outside it — see DESIGN.md-equivalent
+        // The full palette, and nothing outside it, see DESIGN.md-equivalent
         // rules in the project brief. Every surface, border, and text color
         // in the app resolves to one of these seven.
         porcelain: "#FFFFFF",
@@ -17,7 +17,7 @@ const config: Config = {
         espresso: "#2A211C",
       },
       fontFamily: {
-        // Grandstander is the bubble display face — title and card titles
+        // Grandstander is the bubble display face: title and card titles
         // only. Nunito is body prose. Outfit (the font, not the app) is the
         // small-caps-style utility face for labels and button text.
         display: ["var(--font-display)", "sans-serif"],

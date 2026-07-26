@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 // Without this, Next.js has no request-dependent API to key off and would
-// statically render the route at build time — baking in whatever the
+// statically render the route at build time, baking in whatever the
 // database's health happened to be during `next build`, forever.
 export const dynamic = "force-dynamic";
 

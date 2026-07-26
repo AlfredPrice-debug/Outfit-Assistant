@@ -25,9 +25,10 @@ results so the inspiration links are real pages, not invented URLs. See
   the chat input) and Gemini builds at least one outfit around it. The photo
   is compressed client-side and sent for that one request only — it's never
   stored, so it won't reappear after a reload.
-- **Avatars.** The assistant has a fixed illustrated avatar; pick your own
-  from 18 illustrated character icons via the small avatar button in the
-  header (saved to this browser only — see [Data model](#data-model)).
+- **Outfit MC.** The assistant has a name and a persona: she introduces
+  herself at the start of every new chat. Pick her headshot (6 options) and
+  your own avatar (18 options) on the profile page (saved to this browser
+  only — see [Data model](#data-model)).
 - **My closet.** Log what you already own (category, color, description) on
   the profile page. Nothing reads this yet — see
   [Planned for v2](#planned-for-v2-closet-awareness) — but it's there to log
@@ -37,6 +38,8 @@ results so the inspiration links are real pages, not invented URLs. See
 - **New chat.** Start a fresh conversation from the sidebar menu; the old one
   is archived, not deleted, so it stays in the database but stops being what
   the chat page loads.
+- **Chat history.** Old (archived) chats live on the `/history` page. Resume
+  one to swap it back to active, or delete it for good.
 - **Persisted history.** Your conversation survives a reload and a redeploy.
 - **One passcode.** The whole app sits behind a single shared passcode —
   there's no per-user login because there's only one user.
@@ -129,6 +132,10 @@ back empty. So this app never sets `responseSchema`; instead:
    fields, stray commentary around the JSON), the call retries once with a
    stricter instruction before surfacing an error to the user.
 
+The system prompt also names the persona ("You are Outfit MC") and instructs
+the model to never use an em dash in its output, matching a house style rule
+applied everywhere else in this app's own copy.
+
 **Known limitation:** grounding chunk URIs point at Google's
 `vertexaisearch.cloud.google.com` grounding-redirect service rather than the
 publisher's own URL, and this is true across current API versions, not a bug
@@ -148,18 +155,24 @@ the size/type limits enforced server-side too).
 
 ## Avatars
 
-`lib/avatars.ts` is the source of truth for every avatar in the app. The
-assistant's avatar is fixed — a calm pose for normal replies, a distinct
-"thinking" pose while generating — cropped from one illustrated character
-sheet (`ASSISTANT_AVATARS`). The user picks their own stand-in profile
-picture from a set of 18 illustrated character icons (`USER_AVATARS`) on a
-dedicated `/profile` page, reachable by tapping the avatar in the header or
-via "Profile" in the sidebar menu from anywhere in the app; the choice is
-stored in `localStorage`, not the
-database — there's no `User` model to attach it to, and it's cosmetic enough
-not to need one. Every visible chat bubble reflects the *current* choice
-(not a per-message snapshot), so switching avatars re-skins the whole
-conversation on screen immediately, not just future messages.
+`lib/avatars.ts` is the source of truth for every avatar in the app. Both
+sides are user-selectable, picked on a dedicated `/profile` page reachable by
+tapping the avatar in the header or via "Profile" in the sidebar menu from
+anywhere in the app:
+
+- **`USER_AVATARS`**: 18 illustrated character icons standing in for the
+  human user, who has no profile photo in this app.
+- **`ASSISTANT_AVATARS`**: 6 headshots of Outfit MC, the assistant's persona.
+  Unlike the old fixed two-pose avatar (a calm pose for replies, a distinct
+  "thinking" pose while generating) this is a single chosen headshot reused
+  everywhere she appears, since the six options are stylistic variety rather
+  than distinct states.
+
+Both choices are stored in `localStorage`, not the database. There's no
+`User` model to attach either to, and they're cosmetic enough not to need
+one. Every visible chat bubble reflects the *current* choice (not a
+per-message snapshot), so switching avatars re-skins the whole conversation
+on screen immediately, not just future messages.
 
 One gotcha worth documenting: `next/image` optimizes local images by
 internally re-running the request through this app's own middleware. The
@@ -207,6 +220,21 @@ chat calls `POST /api/conversations`, which archives the current
 then does a full page navigation back to `/` — a plain client-side route
 push wouldn't re-run the chat page's history fetch since it only runs once,
 on mount.
+
+## Chat history
+
+The `/history` page lists archived conversations (`lib/conversation.ts`,
+`listArchivedConversations`), each previewed by its first user message. Two
+actions, both driven by `/api/conversations/[id]`:
+
+- **Resume** (`PATCH`): archives whatever conversation is currently active
+  and un-archives the chosen one in its place, a two-way swap rather than a
+  one-way restore. A full page navigation back to `/` follows, for the same
+  reason "Start new chat" does one: the chat page's history fetch only runs
+  once, on mount.
+- **Delete** (`DELETE`): permanently removes the conversation and its
+  `ChatMessage` rows in one transaction. Outfits generated during it are
+  untouched, since `Outfit` rows aren't scoped to a conversation.
 
 ## Failure states
 

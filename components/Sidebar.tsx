@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { MenuIcon, XIcon, PlusIcon, UserIcon, BookmarkIcon } from "lucide-react";
+import { MenuIcon, XIcon, PlusIcon, UserIcon, BookmarkIcon, HistoryIcon } from "lucide-react";
 
-export function Sidebar({ current }: { current: "chat" | "saved" | "profile" }) {
+export function Sidebar({ current }: { current: "chat" | "saved" | "profile" | "history" }) {
   const [open, setOpen] = useState(false);
   const [startingNewChat, setStartingNewChat] = useState(false);
 
@@ -23,7 +23,7 @@ export function Sidebar({ current }: { current: "chat" | "saved" | "profile" }) 
       await fetch("/api/conversations", { method: "POST" });
     } finally {
       // A hard navigation guarantees the chat page re-fetches history from
-      // scratch — its history load only runs once, on mount, so pushing to
+      // scratch. Its history load only runs once, on mount, so pushing to
       // the same route wouldn't pick up the freshly archived/created thread.
       window.location.href = "/";
     }
@@ -89,6 +89,11 @@ export function Sidebar({ current }: { current: "chat" | "saved" | "profile" }) 
           <Link href="/saved" onClick={() => setOpen(false)} className={linkClasses(current === "saved")}>
             <BookmarkIcon className="size-5" aria-hidden="true" />
             Saved outfits
+          </Link>
+
+          <Link href="/history" onClick={() => setOpen(false)} className={linkClasses(current === "history")}>
+            <HistoryIcon className="size-5" aria-hidden="true" />
+            Chat history
           </Link>
         </nav>
       </div>

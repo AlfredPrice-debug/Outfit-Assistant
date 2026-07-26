@@ -1,6 +1,6 @@
 // Session signing for the passcode gate. Built on Web Crypto (crypto.subtle)
 // rather than Node's `crypto` module because this code runs in middleware.ts,
-// which Next.js always executes on the Edge runtime — Node's crypto module
+// which Next.js always executes on the Edge runtime. Node's crypto module
 // isn't available there, but crypto.subtle is available in both Edge and
 // Node 20+, so one implementation covers both call sites.
 export const SESSION_COOKIE_NAME = "outfit_session";
@@ -51,7 +51,7 @@ export async function passcodesMatch(submitted: string, actual: string): Promise
 
 // Cookie value is `<issuedAt>.<hmac(issuedAt, passcode)>`. Verifying against
 // the current APP_PASSCODE (rather than a separate session secret) means
-// rotating the passcode instantly invalidates every existing session — there
+// rotating the passcode instantly invalidates every existing session; there
 // is nothing extra to rotate.
 export async function createSessionValue(passcode: string): Promise<string> {
   const issuedAt = String(Date.now());

@@ -55,7 +55,7 @@ export function OutfitCard({
     .filter(([, value]) => value !== null && value !== undefined);
 
   // Best-effort visual match from a small curated icon set (see
-  // lib/clothingIcons.ts) — a scannable visual on top of the text
+  // lib/clothingIcons.ts): a scannable visual on top of the text
   // description, not a replacement for it. Free-form accessories aren't
   // matched; that list is open-ended text with no fixed icon set to match
   // against.
@@ -69,8 +69,8 @@ export function OutfitCard({
     <article className="flex w-full flex-col overflow-hidden rounded-card bg-butter shadow-card">
       {/* Color story bar: the actual garment colors, so the user can scan
           whether they own something close before reading a word. Hex values
-          come from the model, not the app palette — the one place a color
-          outside the seven tokens is expected. */}
+          come from the model, not the app palette (the one place a color
+          outside the seven tokens is expected). */}
       <div
         className="flex h-10 w-full shrink-0"
         role="img"

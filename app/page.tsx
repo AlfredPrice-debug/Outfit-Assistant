@@ -8,7 +8,8 @@ import { OutfitCard, type OutfitWithId } from "@/components/OutfitCard";
 import { Avatar } from "@/components/Avatar";
 import { MessageActions } from "@/components/MessageActions";
 import { useUserAvatar } from "@/lib/client/useUserAvatar";
-import { ASSISTANT_AVATARS, getUserAvatar } from "@/lib/avatars";
+import { useAssistantAvatar } from "@/lib/client/useAssistantAvatar";
+import { getAssistantAvatar, getUserAvatar } from "@/lib/avatars";
 import type { ChatStreamEvent } from "@/lib/streamEvents";
 import type { ChatHistoryMessage } from "@/lib/apiTypes";
 
@@ -21,7 +22,7 @@ interface PendingState {
   retrying: boolean;
 }
 
-// Real progress from the model is just growing JSON — not something worth
+// Real progress from the model is just growing JSON, not something worth
 // showing a person. A wardrobe joke is a better use of the wait than a raw
 // text dump, and it doesn't need to be literally true to feel like progress.
 const THINKING_MESSAGES = [
@@ -59,6 +60,8 @@ export default function ChatPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const { key: userAvatarKey } = useUserAvatar();
   const userAvatarSrc = getUserAvatar(userAvatarKey).src;
+  const { key: assistantAvatarKey } = useAssistantAvatar();
+  const assistantAvatarSrc = getAssistantAvatar(assistantAvatarKey).src;
 
   useEffect(() => {
     if (!pending || pending.retrying) return;
@@ -86,7 +89,7 @@ export default function ChatPage() {
         });
         setMessages(loaded);
       } catch {
-        if (!cancelled) setBanner("Couldn't load chat history — the database may be unavailable.");
+        if (!cancelled) setBanner("Couldn't load chat history. The database may be unavailable.");
       } finally {
         if (!cancelled) setLoadingHistory(false);
       }
@@ -144,8 +147,8 @@ export default function ChatPage() {
           if (!line.trim()) continue;
           const event: ChatStreamEvent = JSON.parse(line);
           if (event.type === "chunk") {
-            // Real generation progress, but raw JSON isn't meaningful to show
-            // — the thinking message rotation above is the visible signal.
+            // Real generation progress, but raw JSON isn't meaningful to show.
+            // The thinking message rotation above is the visible signal.
           } else if (event.type === "retry") {
             setPending({ retrying: true });
           } else if (event.type === "warning") {
@@ -208,11 +211,17 @@ export default function ChatPage() {
 
         {isEmpty && (
           <div className="flex flex-1 flex-col items-center justify-center gap-6 py-8 text-center">
-            <Avatar src={ASSISTANT_AVATARS.greeting} size={72} label="Outfit Me" />
-            <p className="max-w-xs font-body text-body text-espresso">
-              Describe an occasion, season, or vibe — or attach a photo of a piece you want to build around — and get
-              three outfit ideas with real inspiration links.
-            </p>
+            <Avatar src={assistantAvatarSrc} size={72} label="Outfit MC" />
+            <div className="max-w-xs font-body text-body text-espresso">
+              <p className="font-display text-title text-espresso">Hi, I&apos;m Outfit MC.</p>
+              <p className="mt-2">
+                I put together outfit ideas for any occasion, season, or vibe, with real inspiration links attached.
+              </p>
+              <p className="mt-2">
+                Tell me what you&apos;re dressing for, or attach a photo of a piece you want to build around, and
+                I&apos;ll get you started with three looks.
+              </p>
+            </div>
             <ExampleChips onPick={sendMessage} />
           </div>
         )}
@@ -240,7 +249,7 @@ export default function ChatPage() {
               )}
               {message.role === "assistant" && (
                 <div className="flex flex-col gap-3">
-                  <Avatar src={ASSISTANT_AVATARS.greeting} label="Outfit Me" />
+                  <Avatar src={assistantAvatarSrc} label="Outfit MC" />
                   <div className="flex flex-col gap-6">
                     {message.outfits.map((outfit) => (
                       <OutfitCard key={outfit.id} outfit={outfit} />
@@ -254,7 +263,7 @@ export default function ChatPage() {
               )}
               {message.role === "assistant-error" && (
                 <div className="flex flex-col gap-3">
-                  <Avatar src={ASSISTANT_AVATARS.greeting} label="Outfit Me" />
+                  <Avatar src={assistantAvatarSrc} label="Outfit MC" />
                   <div
                     role="alert"
                     className="max-w-[85%] rounded-card border border-brass bg-butter px-4 py-3 font-body text-body text-espresso"
@@ -275,10 +284,10 @@ export default function ChatPage() {
 
           {pending && (
             <li aria-live="polite" className="flex flex-col gap-3">
-              <Avatar src={ASSISTANT_AVATARS.thinking} label="Outfit Me" />
+              <Avatar src={assistantAvatarSrc} label="Outfit MC" />
               <div className="max-w-[85%] rounded-card border border-brass bg-butter px-4 py-3 font-body text-body text-espresso">
                 {pending.retrying
-                  ? "That didn't come back quite right — trying again…"
+                  ? "That didn't come back quite right, trying again…"
                   : THINKING_MESSAGES[thinkingIndex]}
               </div>
             </li>

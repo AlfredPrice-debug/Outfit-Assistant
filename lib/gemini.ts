@@ -29,7 +29,7 @@ export interface ChatTurn {
 // A JSON contract without inspirationLinks: the model is never asked for
 // URLs, so it can never be the source of a fabricated one. Real links are
 // spliced in afterward from Google Search grounding metadata.
-const SYSTEM_INSTRUCTION = `You are Outfit Me, a stylist that turns a short request (an occasion, season, or vibe) into concrete outfit ideas the user can put together from clothes they likely already own.
+const SYSTEM_INSTRUCTION = `You are Outfit MC, a stylist that turns a short request (an occasion, season, or vibe) into concrete outfit ideas the user can put together from clothes they likely already own.
 
 Use Google Search to ground your suggestions in current, real fashion context.
 
@@ -59,14 +59,15 @@ Respond with ONLY a single JSON object, no markdown code fences, no commentary b
 Rules:
 - Always return exactly 3 outfits in the array.
 - Describe garments generically (e.g. "white linen button-down", "cropped wide-leg jeans"). Never name a brand or retailer.
-- Do not include an "inspirationLinks" field — that is attached separately.
-- "colorStory" has 3 to 5 entries, one per significant garment color in that outfit. Every "hex" must be a valid 6-digit hex code, and every entry must correspond to a color actually named or implied by that outfit's item descriptions — never invent a color that doesn't appear in the outfit.
-- If the user attaches a photo of a garment, look at it and build at least one of the three outfits around that actual item — describe the pictured item generically (as you would any garment) rather than guessing a brand, and let its real color(s) drive that outfit's colorStory.
-- Do not wrap the JSON in markdown fences or add any surrounding text.`;
+- Do not include an "inspirationLinks" field; that is attached separately.
+- "colorStory" has 3 to 5 entries, one per significant garment color in that outfit. Every "hex" must be a valid 6-digit hex code, and every entry must correspond to a color actually named or implied by that outfit's item descriptions. Never invent a color that doesn't appear in the outfit.
+- If the user attaches a photo of a garment, look at it and build at least one of the three outfits around that actual item. Describe the pictured item generically (as you would any garment) rather than guessing a brand, and let its real color(s) drive that outfit's colorStory.
+- Do not wrap the JSON in markdown fences or add any surrounding text.
+- Never use an em dash (—) anywhere in your response. Use a comma, period, or parentheses instead.`;
 
 const RETRY_SYSTEM_INSTRUCTION = `${SYSTEM_INSTRUCTION}
 
-Your previous response failed validation. This time, output ONLY the raw JSON object described above. No markdown fences, no leading or trailing text, no explanation — the entire response body must be valid JSON.`;
+Your previous response failed validation. This time, output ONLY the raw JSON object described above. No markdown fences, no leading or trailing text, no explanation. The entire response body must be valid JSON.`;
 
 function toContents(history: ChatTurn[], message: string, image?: AttachedImage): Content[] {
   const contents: Content[] = history.map((turn) => ({
@@ -74,7 +75,7 @@ function toContents(history: ChatTurn[], message: string, image?: AttachedImage)
     role: turn.role === "user" ? "user" : "model",
     parts: [{ text: turn.content }],
   }));
-  // The image only ever applies to the live turn — it's never persisted, so
+  // The image only ever applies to the live turn, it's never persisted, so
   // it can't appear in `history` for a later message anyway.
   const parts: Part[] = [{ text: message }];
   if (image) {
@@ -117,7 +118,7 @@ function extractGoogleErrorDetail(rawMessage: string): string | null {
 }
 
 // Grounding chunk URIs point at Google's grounding redirect service rather
-// than the publisher's own URL — that's a known characteristic of Search
+// than the publisher's own URL. That's a known characteristic of Search
 // grounding (see DEPLOY.md / README), not a bug here. They still resolve to a
 // real page, so they satisfy "never fabricate a URL".
 function dedupeLinks(chunks: GroundingChunk[]): InspirationLink[] {
@@ -134,7 +135,7 @@ function dedupeLinks(chunks: GroundingChunk[]): InspirationLink[] {
 
 // Grounding metadata isn't attributed to a specific outfit within the JSON
 // blob (grounding + strict per-segment attribution don't compose reliably
-// once the model is also being told to emit exact JSON — see README). Instead
+// once the model is also being told to emit exact JSON, see README). Instead
 // we take the deduped pool of real sources for the whole response and hand
 // two apiece to each outfit in order, which keeps every link traceable to an
 // actual grounding chunk without fragile character-offset matching.
@@ -171,7 +172,7 @@ async function callGeminiOnce(
       config: {
         systemInstruction,
         // Grounding and structured-output mode (responseSchema /
-        // responseMimeType) cannot be combined reliably — grounding metadata
+        // responseMimeType) cannot be combined reliably: grounding metadata
         // comes back empty when both are set. So this call stays in plain
         // text mode and the JSON contract is enforced entirely through the
         // system instruction plus the Zod validation below.
@@ -202,7 +203,7 @@ async function callGeminiOnce(
     }
     if (err instanceof ApiError) {
       // An invalid key comes back as 400 INVALID_ARGUMENT / API_KEY_INVALID,
-      // not 401/403 — confirmed against the live API, not assumed.
+      // not 401/403 (confirmed against the live API, not assumed).
       if (err.status === 401 || err.status === 403 || /api[_ ]?key/i.test(err.message)) {
         throw new GeminiConfigError();
       }

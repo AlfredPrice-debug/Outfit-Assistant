@@ -1,8 +1,8 @@
 // Prisma schema for Outfit Me.
 //
 // Every model carries a `userId` column defaulted to a single owner value from
-// OWNER_ID. There is no User model and no auth relation in v1 — this is a
-// single-user app — but scoping every row by userId now means a future
+// OWNER_ID. There is no User model and no auth relation in v1, since this is
+// a single-user app, but scoping every row by userId now means a future
 // multi-user upgrade is an auth + query-filter change, not a migration that
 // has to backfill ownership onto existing data.
 datasource db {
@@ -16,7 +16,7 @@ generator client {
 
 // A conversation is a contiguous chat thread. "Start new chat" archives the
 // current one (isArchived: true) and creates a fresh one rather than
-// deleting anything, so old messages/outfits stay intact in the database —
+// deleting anything, so old messages/outfits stay intact in the database;
 // they just stop being the thread that loads on the chat page.
 model Conversation {
   id         String        @id @default(cuid())
@@ -47,12 +47,12 @@ model Outfit {
   title            String
   occasion         String
   season           String
-  // { top, bottom, outerwear, shoes, accessories: string[] } — kept as JSON
+  // { top, bottom, outerwear, shoes, accessories: string[] }, kept as JSON
   // rather than columns because the layer set is a UI/prompt concern, not a
   // query concern; nothing filters on individual layers.
   itemsByLayer     Json
   rationale        String   @db.Text
-  // { name: string, hex: string }[], 3-5 entries — the color story bar.
+  // { name: string, hex: string }[], 3-5 entries: the color story bar.
   // Unlike inspirationLinks, these are trusted from the model directly (Zod
   // validates hex format, not the color choice itself).
   colorStory       Json

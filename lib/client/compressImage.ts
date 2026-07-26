@@ -1,4 +1,4 @@
-// Browser-only (uses Canvas + createImageBitmap) — only ever imported from
+// Browser-only (uses Canvas + createImageBitmap). Only ever imported from
 // "use client" components. Downscaling client-side before upload keeps a
 // full-resolution phone photo from blowing past the request size limit and
 // keeps the Gemini call cheaper, without needing an image library.

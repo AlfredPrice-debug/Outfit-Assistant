@@ -1,6 +1,6 @@
 // A curated subset (~30) of a much larger icon sheet the user provided,
 // covering the four structured item-by-layer categories well. Free-form
-// "accessories" strings are intentionally not matched here — they're
+// "accessories" strings are intentionally not matched here, they're
 // open-ended text (see prisma schema), so a fixed icon set would miss most
 // of them anyway; those stay text-only in the UI, same as before.
 export type ClothingCategory = "top" | "bottom" | "outerwear" | "shoes";
@@ -61,7 +61,7 @@ function keywordScore(description: string, keywords: string[]): number {
 }
 
 // Best-effort visual match for a generic garment description. Returns null
-// rather than a wrong guess when nothing scores above zero — the existing
+// rather than a wrong guess when nothing scores above zero. The existing
 // text description remains the authoritative detail either way.
 export function matchClothingIcon(category: ClothingCategory, description: string): string | null {
   let best: ClothingIcon | null = null;

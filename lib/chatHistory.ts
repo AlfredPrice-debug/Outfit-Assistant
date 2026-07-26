@@ -6,7 +6,7 @@ import type { ChatHistoryMessage } from "./apiTypes";
 
 const HISTORY_LIMIT = 20;
 
-// Assistant turns store a small pointer — not prose — because the outfit
+// Assistant turns store a small pointer, not prose, because the outfit
 // data itself already lives in the Outfit table (that's what the Saved page
 // reads from). Storing it twice would let the two copies drift out of sync
 // whenever a save toggle changes isSaved after the fact.
@@ -34,7 +34,7 @@ function parsePointer(content: string): AssistantPointer | null {
 }
 
 // Context fed back to Gemini for follow-up requests. Assistant turns collapse
-// to their outfit titles rather than full JSON — enough for the model to
+// to their outfit titles rather than full JSON, enough for the model to
 // avoid repeating itself or to act on "make the second one warmer", without
 // spending tokens replaying rationale text it already generated once.
 export async function getRecentHistory(): Promise<ChatTurn[]> {

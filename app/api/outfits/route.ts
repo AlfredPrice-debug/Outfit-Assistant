@@ -4,7 +4,7 @@ import { getOwnerId } from "@/lib/owner";
 
 export const runtime = "nodejs";
 
-// GET /api/outfits?occasion=&season= — saved outfits only, newest first.
+// GET /api/outfits?occasion=&season=: saved outfits only, newest first.
 // Filters are exact-match (values come from a <select> populated with the
 // distinct occasions/seasons already saved, not free text).
 export async function GET(req: NextRequest) {

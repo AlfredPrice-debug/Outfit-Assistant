@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   const userId = getOwnerId();
 
   // History is read before the new user message is written so it never
-  // shows up twice — once as trailing context, once as the live request.
+  // shows up twice: once as trailing context, once as the live request.
   let history: Awaited<ReturnType<typeof getRecentHistory>> = [];
   let dbAvailable = true;
   let conversationId = "";
