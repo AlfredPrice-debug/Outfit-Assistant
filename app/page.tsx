@@ -101,6 +101,7 @@ export default function ChatPage() {
   const [banner, setBanner] = useState<string | null>(null);
   const [chatMode, setChatMode] = useState<"conversation" | "swipe" | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const prevMessageCountRef = useRef(0);
   const { key: userAvatarKey } = useUserAvatar();
   const userAvatarSrc = getUserAvatar(userAvatarKey).src;
   const { key: assistantAvatarKey } = useAssistantAvatar();
@@ -144,7 +145,16 @@ export default function ChatPage() {
   }, []);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Swipe keep/discard/undo update a message's swipeState in place (same
+    // array length), which shouldn't yank the screen down to a newly kept
+    // card. Only an actual new message (or the pending indicator) should
+    // pull the view along; the swipe stack stays put until the user scrolls
+    // on their own.
+    const grewByRealMessage = messages.length > prevMessageCountRef.current;
+    prevMessageCountRef.current = messages.length;
+    if (grewByRealMessage || pending) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages, pending]);
 
   function handleSwipeDecide(messageId: string, outfitId: string, direction: "left" | "right") {

@@ -80,13 +80,13 @@ function DraggableOutfitPreview({
         style={{ opacity: keepOpacity }}
         className="pointer-events-none absolute right-4 top-4 rounded-pill bg-amber px-3 py-1 font-utility text-utility uppercase text-espresso shadow-card"
       >
-        Keep
+        Keep in Chat
       </motion.span>
       <motion.span
         style={{ opacity: discardOpacity }}
         className="pointer-events-none absolute left-4 top-4 rounded-pill bg-espresso px-3 py-1 font-utility text-utility uppercase text-porcelain shadow-card"
       >
-        Discard
+        Toss It
       </motion.span>
     </motion.div>
   );
@@ -231,20 +231,20 @@ export function SwipeableOutfitStack({
         <button
           type="button"
           onClick={() => decide("left")}
-          aria-label="Discard this look"
+          aria-label="Toss this look"
           className="flex items-center gap-1.5 rounded-pill border border-brass px-4 py-2 font-utility text-utility uppercase text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
         >
           <XIcon className="size-4" aria-hidden="true" />
-          Discard
+          Toss It
         </button>
         <button
           type="button"
           onClick={() => decide("right")}
-          aria-label="Keep this look"
+          aria-label="Keep this look in chat"
           className="flex items-center gap-1.5 rounded-pill bg-amber px-4 py-2 font-utility text-utility uppercase text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
         >
           <CheckIcon className="size-4" aria-hidden="true" />
-          Keep
+          Keep in Chat
         </button>
       </div>
     </div>
