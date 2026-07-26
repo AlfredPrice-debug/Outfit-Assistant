@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import { CheckIcon, XIcon, Undo2Icon } from "lucide-react";
 import type { OutfitWithId } from "@/lib/apiTypes";
+import { readableTextColor, FALLBACK_CARD_HEX } from "@/lib/colorContrast";
 
 const LAYER_LABELS: Record<"top" | "bottom" | "outerwear" | "shoes", string> = {
   top: "Top",
@@ -14,25 +15,9 @@ const LAYER_LABELS: Record<"top" | "bottom" | "outerwear" | "shoes", string> = {
 
 const SWIPE_THRESHOLD = 120;
 
-// Card background falls back to butter (the design system's card color) when
-// an outfit somehow has no color story, which the schema otherwise forbids.
-const FALLBACK_CARD_HEX = "#EFC673";
-
 interface SwipeHistoryEntry {
   id: string;
   direction: "left" | "right";
-}
-
-// Relative luminance (WCAG) of a #rrggbb hex string, used to pick readable
-// text over whatever color the outfit's own palette gives the card.
-function relativeLuminance(hex: string): number {
-  const channels = hex.replace("#", "").match(/.{2}/g)?.map((h) => parseInt(h, 16) / 255) ?? [1, 1, 1];
-  const [r = 1, g = 1, b = 1] = channels.map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-function readableTextColor(backgroundHex: string): string {
-  return relativeLuminance(backgroundHex) > 0.45 ? "#2A211C" /* espresso */ : "#FFFFFF" /* porcelain */;
 }
 
 // Drag-to-decide card, used by SwipeableOutfitStack for the top (interactive)
@@ -73,7 +58,14 @@ function DraggableOutfitPreview({
             }
           : { scale: 1, y: 0, opacity: 1, transition: { duration: 0.2, ease: "easeOut" } }
       }
-      className="absolute inset-0 z-10 cursor-grab active:cursor-grabbing"
+      // framer-motion writes its own touch-action (pan-y, for a single-axis
+      // x drag) directly onto this element's inline style to allow native
+      // vertical scrolling alongside the JS-driven horizontal drag. That's
+      // exactly the behavior causing the page to wobble/scroll mid-swipe,
+      // and a plain class can't out-rank an inline style, so this needs
+      // !important to actually win and hand the whole gesture to the drag
+      // handler instead.
+      className="absolute inset-0 z-10 !touch-none cursor-grab active:cursor-grabbing"
     >
       <OutfitPreviewCard outfit={outfit} />
       <motion.span

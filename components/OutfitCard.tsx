@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { SearchIcon } from "lucide-react";
 import type { OutfitWithId } from "@/lib/apiTypes";
 import { addOutfitToCloset } from "@/lib/client/closet";
+import { readableTextColor, FALLBACK_CARD_HEX } from "@/lib/colorContrast";
 
 export type { OutfitWithId };
 
@@ -18,10 +19,15 @@ export function OutfitCard({
   outfit,
   onSaveChange,
   showAddToCloset = false,
+  matchOutfitColor = false,
 }: {
   outfit: OutfitWithId;
   onSaveChange?: (id: string, isSaved: boolean) => void;
   showAddToCloset?: boolean;
+  // When true, the card keeps the same lead-color background it had as a
+  // swipe card instead of switching to the standard gradient, so a kept
+  // outfit doesn't visibly change color the moment it lands in the chat.
+  matchOutfitColor?: boolean;
 }) {
   const [isSaved, setIsSaved] = useState(outfit.isSaved);
   const [pending, setPending] = useState(false);
@@ -72,10 +78,21 @@ export function OutfitCard({
     .map((key) => [key, outfit.itemsByLayer[key]] as const)
     .filter(([, value]) => value !== null && value !== undefined);
 
+  const backgroundHex = outfit.colorStory[0]?.hex ?? FALLBACK_CARD_HEX;
+  const textStyle: CSSProperties | undefined = matchOutfitColor
+    ? { color: readableTextColor(backgroundHex) }
+    : undefined;
+
   return (
     // Gradient (not a flat fill) is what reads as a raised, lit card rather
-    // than a flat rectangle; both stops are locked-palette tokens.
-    <article className="flex w-full flex-col overflow-hidden rounded-card bg-gradient-to-br from-butter to-brass shadow-card">
+    // than a flat rectangle; both stops are locked-palette tokens. When
+    // matching an outfit's own color, that solid color wins instead (an
+    // inline style always beats a class), keeping continuity with how the
+    // card looked while it was still in the swipe stack.
+    <article
+      style={matchOutfitColor ? { backgroundColor: backgroundHex } : undefined}
+      className="flex w-full flex-col overflow-hidden rounded-card bg-gradient-to-br from-butter to-brass shadow-card"
+    >
       {/* Color story bar: the actual garment colors, so the user can scan
           whether they own something close before reading a word. Hex values
           come from the model, not the app palette (the one place a color
@@ -92,7 +109,9 @@ export function OutfitCard({
 
       <div className="flex flex-col gap-4 p-4">
         <div className="flex items-start justify-between gap-3">
-          <h3 className="font-display text-title text-espresso">{outfit.title}</h3>
+          <h3 style={textStyle} className="font-display text-title text-espresso">
+            {outfit.title}
+          </h3>
           <button
             type="button"
             onClick={toggleSave}
@@ -105,29 +124,41 @@ export function OutfitCard({
           </button>
         </div>
 
-        <p className="font-utility text-utility uppercase text-espresso">
+        <p style={textStyle} className="font-utility text-utility uppercase text-espresso">
           {outfit.occasion} · {outfit.season}
         </p>
 
         <dl className="flex flex-col gap-2">
           {layerEntries.map(([key, value]) => (
             <div key={key} className="flex gap-3">
-              <dt className="w-24 shrink-0 font-utility text-utility uppercase text-espresso">{LAYER_LABELS[key]}</dt>
-              <dd className="font-body text-body text-espresso">{value}</dd>
+              <dt style={textStyle} className="w-24 shrink-0 font-utility text-utility uppercase text-espresso">
+                {LAYER_LABELS[key]}
+              </dt>
+              <dd style={textStyle} className="font-body text-body text-espresso">
+                {value}
+              </dd>
             </div>
           ))}
           {outfit.itemsByLayer.accessories.length > 0 && (
             <div className="flex gap-3">
-              <dt className="w-24 shrink-0 font-utility text-utility uppercase text-espresso">Accessories</dt>
-              <dd className="font-body text-body text-espresso">{outfit.itemsByLayer.accessories.join(", ")}</dd>
+              <dt style={textStyle} className="w-24 shrink-0 font-utility text-utility uppercase text-espresso">
+                Accessories
+              </dt>
+              <dd style={textStyle} className="font-body text-body text-espresso">
+                {outfit.itemsByLayer.accessories.join(", ")}
+              </dd>
             </div>
           )}
         </dl>
 
-        <p className="font-body text-body text-espresso">{outfit.rationale}</p>
+        <p style={textStyle} className="font-body text-body text-espresso">
+          {outfit.rationale}
+        </p>
 
         <div>
-          <h4 className="font-utility text-utility uppercase text-espresso">Inspiration</h4>
+          <h4 style={textStyle} className="font-utility text-utility uppercase text-espresso">
+            Inspiration
+          </h4>
           {outfit.inspirationLinks.length > 0 ? (
             <ul className="mt-2 flex flex-col gap-2">
               {outfit.inspirationLinks.map((link) => (
@@ -145,7 +176,9 @@ export function OutfitCard({
               ))}
             </ul>
           ) : (
-            <p className="mt-2 font-body text-body text-espresso">No sources were found for this look.</p>
+            <p style={textStyle} className="mt-2 font-body text-body text-espresso">
+              No sources were found for this look.
+            </p>
           )}
         </div>
 

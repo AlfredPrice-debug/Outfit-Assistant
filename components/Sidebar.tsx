@@ -89,7 +89,7 @@ export function Sidebar({ current }: { current: "chat" | "saved" | "profile" | "
             type="button"
             onClick={handleNewChat}
             disabled={startingNewChat}
-            className={`${linkClasses(false)} border border-brass disabled:opacity-50`}
+            className={`${linkClasses(false)} disabled:opacity-50`}
           >
             <PlusIcon className="size-5" aria-hidden="true" />
             Start new chat

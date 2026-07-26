@@ -76,6 +76,25 @@ const THINKING_MESSAGES = [
   "Losing a sock to the dryer, again…",
   "Overthinking a scarf…",
   "Channeling main character energy…",
+  "Negotiating with a shrinking pair of jeans…",
+  "Refusing to wear socks with sandals, obviously…",
+  "Hunting for the missing left glove…",
+  "Debating if this counts as \"athleisure\"…",
+  "Committing a fashion crime, then undoing it…",
+  "Sniffing a shirt to check if it's clean…",
+  "Rehearsing a runway walk in the mirror…",
+  "Untangling a necklace that fought back…",
+  "Judging a hat, harshly…",
+  "Reconsidering the fanny pack…",
+  "Counting how many stripes is too many…",
+  "Asking a houseplant for style advice…",
+  "Practicing a nonchalant shrug for the outfit reveal…",
+  "Double-checking that plaid doesn't clash with plaid…",
+  "Wondering who invented pockets that don't hold anything…",
+  "Giving a beret a fair chance…",
+  "Measuring cuffs with great seriousness…",
+  "Politely arguing with a mannequin…",
+  "Recovering from a static cling incident…",
 ];
 
 function formatOutfitsAsText(outfits: OutfitWithId[]): string {
@@ -361,7 +380,7 @@ export default function ChatPage() {
                         {message.outfits
                           .filter((outfit) => message.swipeState!.kept.includes(outfit.id))
                           .map((outfit) => (
-                            <OutfitCard key={outfit.id} outfit={outfit} showAddToCloset />
+                            <OutfitCard key={outfit.id} outfit={outfit} showAddToCloset matchOutfitColor />
                           ))}
                       </>
                     ) : (
