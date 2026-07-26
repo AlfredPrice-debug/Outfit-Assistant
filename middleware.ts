@@ -5,10 +5,15 @@ import { SESSION_COOKIE_NAME, verifySessionValue } from "@/lib/session";
 // or route handler. /gate, /api/auth, and /api/health are excluded there
 // because they have to be reachable without a session: /gate is how you get
 // one, /api/auth is what issues it, and /api/health is hit by Railway's
-// health checker, which never carries our cookie. /avatars is excluded
-// because next/image's optimizer fetches local images by internally
-// re-running them through this same middleware with no cookie attached —
-// without the exclusion, every optimized avatar 400s in production.
+// health checker, which never carries our cookie.
+//
+// Any static file under /public (avatars, clothing icons, future additions)
+// is excluded too — next/image's optimizer fetches local images by
+// internally re-running the request through this same middleware with no
+// cookie attached, so without this every optimized image 400s in
+// production. Matching "has a file extension" once, instead of listing each
+// public subfolder by name, means a new /public/whatever/*.png doesn't
+// silently reintroduce this bug.
 export async function middleware(req: NextRequest) {
   const appPasscode = process.env.APP_PASSCODE;
 
@@ -40,5 +45,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|avatars|gate|api/auth|api/health).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|gate|api/auth|api/health|.*\\.[a-zA-Z0-9]+$).*)"],
 };

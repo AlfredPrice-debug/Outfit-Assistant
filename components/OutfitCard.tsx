@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
+import { SearchIcon } from "lucide-react";
 import type { OutfitWithId } from "@/lib/apiTypes";
+import { matchClothingIcon, type ClothingCategory } from "@/lib/clothingIcons";
 
 export type { OutfitWithId };
 
-const LAYER_LABELS: Record<string, string> = {
+const LAYER_LABELS: Record<"top" | "bottom" | "outerwear" | "shoes", string> = {
   top: "Top",
   bottom: "Bottom",
   outerwear: "Outerwear",
@@ -51,6 +54,17 @@ export function OutfitCard({
     .map((key) => [key, outfit.itemsByLayer[key]] as const)
     .filter(([, value]) => value !== null && value !== undefined);
 
+  // Best-effort visual match from a small curated icon set (see
+  // lib/clothingIcons.ts) — a scannable visual on top of the text
+  // description, not a replacement for it. Free-form accessories aren't
+  // matched; that list is open-ended text with no fixed icon set to match
+  // against.
+  const iconEntries: { key: string; label: string; src: string }[] = [];
+  for (const [key, value] of layerEntries) {
+    const src = matchClothingIcon(key as ClothingCategory, value as string);
+    if (src) iconEntries.push({ key, label: LAYER_LABELS[key], src });
+  }
+
   return (
     <article className="flex w-full flex-col overflow-hidden rounded-card bg-butter shadow-card">
       {/* Color story bar: the actual garment colors, so the user can scan
@@ -86,6 +100,19 @@ export function OutfitCard({
           {outfit.occasion} · {outfit.season}
         </p>
 
+        {iconEntries.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {iconEntries.map((entry) => (
+              <div
+                key={entry.key}
+                className="flex h-14 w-14 items-center justify-center rounded-small border border-brass bg-porcelain p-1"
+              >
+                <Image src={entry.src} alt={entry.label} width={40} height={40} className="object-contain" />
+              </div>
+            ))}
+          </div>
+        )}
+
         <dl className="flex flex-col gap-2">
           {layerEntries.map(([key, value]) => (
             <div key={key} className="flex gap-3">
@@ -106,16 +133,17 @@ export function OutfitCard({
         <div>
           <h4 className="font-utility text-utility uppercase text-espresso">Inspiration</h4>
           {outfit.inspirationLinks.length > 0 ? (
-            <ul className="mt-2 flex flex-col gap-1">
+            <ul className="mt-2 flex flex-col gap-2">
               {outfit.inspirationLinks.map((link) => (
                 <li key={link.url}>
                   <a
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-body text-body text-deepPool underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
+                    className="flex items-center gap-2 rounded-small border border-brass bg-porcelain px-3 py-2 font-body text-small text-deepPool focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
                   >
-                    {link.label}
+                    <SearchIcon className="size-4 shrink-0" aria-hidden="true" />
+                    <span className="underline underline-offset-2">{link.label}</span>
                   </a>
                 </li>
               ))}

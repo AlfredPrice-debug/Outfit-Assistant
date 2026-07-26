@@ -17,9 +17,10 @@ results so the inspiration links are real pages, not invented URLs. See
   of a garment attached — and get three outfit cards back, streamed in as
   they generate.
 - **Outfit cards.** Each opens with a color story bar (the outfit's actual
-  garment colors), then shows a title, items grouped by layer (top, bottom,
-  outerwear, shoes, accessories), a short rationale, and up to two inspiration
-  links that open in a new tab.
+  garment colors), a small icon grid giving each layer (top/bottom/outerwear/
+  shoes) a scannable visual, then the title, items grouped by layer,
+  a short rationale, and up to two inspiration links styled as buttons that
+  open in a new tab.
 - **Photo input.** Attach a photo of a piece you own (via the image icon in
   the chat input) and Gemini builds at least one outfit around it. The photo
   is compressed client-side and sent for that one request only — it's never
@@ -143,13 +144,35 @@ not to need one. Every visible chat bubble reflects the *current* choice
 conversation on screen immediately, not just future messages.
 
 One gotcha worth documenting: `next/image` optimizes local images by
-internally re-running the request through this app's own middleware —
-without excluding `/avatars` from the passcode-gate matcher, every avatar
-request 400s in production (no cookie on that internal request). See the
-comment in `middleware.ts`. Self-hosted `next/image` also requires the
+internally re-running the request through this app's own middleware. The
+first fix for this excluded `/avatars` specifically from the passcode-gate
+matcher; adding the clothing icon set (see below) hit the exact same 400 on
+`/clothing` and made clear that was the wrong shape of fix. `middleware.ts`
+now excludes any request path with a file extension in one rule instead of
+naming each `/public` subfolder — a future `/public/whatever/*.png` won't
+silently reintroduce this. Self-hosted `next/image` also requires the
 `sharp` package at runtime (in `dependencies`, not `devDependencies` — it
 must survive a production-only install) or every optimized image silently
 fails the same way.
+
+## Clothing icons
+
+Outfit cards show a small icon per layer (top/bottom/outerwear/shoes)
+alongside the text description. `lib/clothingIcons.ts` holds a curated ~30
+icons (cropped from a much larger sheet the user provided) tagged with a
+category and keywords, and `matchClothingIcon()` does a keyword-overlap match
+against Gemini's generic item text (e.g. "white linen button-down" →
+a button-down icon). It's best-effort: a wrong or missing match just omits
+the icon rather than showing something misleading — the text description
+next to it stays the authoritative detail either way. Free-form
+`accessories` strings aren't matched at all; they're open-ended text with no
+fixed icon set to match against.
+
+The icon PNGs (like the avatar sheets) have a checkerboard baked into their
+pixels rather than a real alpha channel, so a faint checker texture is
+visible within each icon's tile — a deliberate trade-off against the real
+risk of a naive chroma-key accidentally punching holes in legitimately
+white/gray garment icons across ~30 varied images.
 
 ## Failure states
 
