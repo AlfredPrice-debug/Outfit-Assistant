@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getOwnerId } from "@/lib/owner";
 import { generateOutfits } from "@/lib/gemini";
 import { encodeAssistantContent, getRecentHistory, listChatMessages } from "@/lib/chatHistory";
+import { attachedImageSchema } from "@/lib/schemas";
 import type { ChatStreamEvent } from "@/lib/streamEvents";
 import {
   GeminiConfigError,
@@ -18,6 +19,7 @@ export const runtime = "nodejs";
 
 const requestSchema = z.object({
   message: z.string().trim().min(1).max(2000),
+  image: attachedImageSchema.optional(),
 });
 
 export async function GET() {
@@ -38,7 +40,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Message is required." }, { status: 400 });
   }
-  const { message } = parsed.data;
+  const { message, image } = parsed.data;
   const userId = getOwnerId();
 
   // History is read before the new user message is written so it never
@@ -72,10 +74,15 @@ export async function POST(req: NextRequest) {
       }
 
       try {
-        const { finalResponse } = await generateOutfits(history, message, (evt) => {
-          if (evt.type === "chunk") send({ type: "chunk", text: evt.text });
-          if (evt.type === "retry") send({ type: "retry" });
-        });
+        const { finalResponse } = await generateOutfits(
+          history,
+          message,
+          (evt) => {
+            if (evt.type === "chunk") send({ type: "chunk", text: evt.text });
+            if (evt.type === "retry") send({ type: "retry" });
+          },
+          image,
+        );
 
         let outfitsWithIds: (typeof finalResponse.outfits[number] & { id: string; isSaved: boolean })[];
 

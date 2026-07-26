@@ -5,7 +5,10 @@ import { SESSION_COOKIE_NAME, verifySessionValue } from "@/lib/session";
 // or route handler. /gate, /api/auth, and /api/health are excluded there
 // because they have to be reachable without a session: /gate is how you get
 // one, /api/auth is what issues it, and /api/health is hit by Railway's
-// health checker, which never carries our cookie.
+// health checker, which never carries our cookie. /avatars is excluded
+// because next/image's optimizer fetches local images by internally
+// re-running them through this same middleware with no cookie attached —
+// without the exclusion, every optimized avatar 400s in production.
 export async function middleware(req: NextRequest) {
   const appPasscode = process.env.APP_PASSCODE;
 
@@ -37,5 +40,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|gate|api/auth|api/health).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|avatars|gate|api/auth|api/health).*)"],
 };

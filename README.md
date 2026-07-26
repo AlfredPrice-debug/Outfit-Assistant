@@ -13,11 +13,20 @@ results so the inspiration links are real pages, not invented URLs. See
 
 ## What it does
 
-- **Chat.** Describe an occasion, season, or vibe. Get three outfit cards
-  back, streamed in as they generate.
-- **Outfit cards.** Each shows a title, items grouped by layer (top, bottom,
+- **Chat.** Describe an occasion, season, or vibe — optionally with a photo
+  of a garment attached — and get three outfit cards back, streamed in as
+  they generate.
+- **Outfit cards.** Each opens with a color story bar (the outfit's actual
+  garment colors), then shows a title, items grouped by layer (top, bottom,
   outerwear, shoes, accessories), a short rationale, and up to two inspiration
   links that open in a new tab.
+- **Photo input.** Attach a photo of a piece you own (via the image icon in
+  the chat input) and Gemini builds at least one outfit around it. The photo
+  is compressed client-side and sent for that one request only — it's never
+  stored, so it won't reappear after a reload.
+- **Avatars.** The assistant has a fixed illustrated avatar; pick your own
+  from a few options via the small avatar button in the header (saved to
+  this browser only — see [Data model](#data-model)).
 - **Save.** Toggle any outfit to save it; revisit it from the Saved outfits
   page, filterable by occasion and season, from any device.
 - **Persisted history.** Your conversation survives a reload and a redeploy.
@@ -109,6 +118,34 @@ publisher's own URL, and this is true across current API versions, not a bug
 in this app. The link still resolves to a real page — it's just a redirect,
 not a direct link — so it satisfies "never fabricate a URL" without being the
 prettiest possible URL to show a user.
+
+## Multimodal input
+
+The chat input's photo icon lets you attach a picture of a garment. It's
+downscaled and compressed to a small JPEG in the browser
+(`lib/client/compressImage.ts`) before it ever leaves the device, then sent
+as inline image data alongside the text for that one Gemini call only — it
+is never written to the database, so it won't reappear after a reload (this
+app has no object storage; see `attachedImageSchema` in `lib/schemas.ts` for
+the size/type limits enforced server-side too).
+
+## Avatars
+
+`components/Avatar.tsx` crops five poses from one illustrated character
+sheet. The assistant's avatar is fixed (a calm pose for normal replies, a
+"thinking" pose while generating); the other three poses are offered to the
+user as a stand-in profile picture via the avatar button in the header. That
+choice is stored in `localStorage`, not the database — there's no `User`
+model to attach it to, and it's cosmetic enough not to need one.
+
+One gotcha worth documenting: `next/image` optimizes local images by
+internally re-running the request through this app's own middleware —
+without excluding `/avatars` from the passcode-gate matcher, every avatar
+request 400s in production (no cookie on that internal request). See the
+comment in `middleware.ts`. Self-hosted `next/image` also requires the
+`sharp` package at runtime (in `dependencies`, not `devDependencies` — it
+must survive a production-only install) or every optimized image silently
+fails the same way.
 
 ## Failure states
 
