@@ -36,7 +36,6 @@ export function ChatInput({
               onSubmit(e);
             }
           }}
-          placeholder="How can I OutFit you?"
           disabled={disabled}
           className="min-h-[1.75rem] flex-1 resize-none bg-transparent py-1.5 font-body text-body text-espresso focus:outline-none disabled:opacity-50"
         />
