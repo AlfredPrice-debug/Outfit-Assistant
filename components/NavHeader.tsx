@@ -10,11 +10,11 @@ export function NavHeader({ current }: { current: "chat" | "saved" | "profile" |
   const { key } = useUserAvatar();
 
   return (
-    <header className="sticky top-0 z-40 flex items-center justify-between border-b border-brass bg-porcelain px-5 py-4">
-      <div className="flex items-center gap-3">
-        <Sidebar current={current} />
-        <h1 className="font-display text-title text-espresso">OutFit Me</h1>
-      </div>
+    <header className="fixed inset-x-0 top-0 z-40 mx-auto flex h-16 w-full max-w-app items-center justify-between border-b border-brass bg-porcelain px-5">
+      <Sidebar current={current} />
+      <h1 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-display text-title text-espresso">
+        OutFit Me
+      </h1>
       {current !== "profile" && (
         <Link
           href="/profile"

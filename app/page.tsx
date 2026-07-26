@@ -200,7 +200,7 @@ export default function ChatPage() {
   const isEmpty = !loadingHistory && messages.length === 0 && !pending;
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-porcelain">
+    <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-porcelain pt-16">
       <NavHeader current="chat" />
       <main className="flex flex-1 flex-col overflow-y-auto px-5 py-6">
         {banner && (

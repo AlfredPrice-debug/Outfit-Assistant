@@ -40,7 +40,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-porcelain">
+    <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-porcelain pt-16">
       <NavHeader current="profile" />
       <main className="flex flex-1 flex-col gap-6 px-5 py-6">
         <div className="flex flex-col items-center gap-3 text-center">
@@ -58,8 +58,8 @@ export default function ProfilePage() {
                 role="radio"
                 aria-checked={selected}
                 onClick={() => pickUser(option.key)}
-                className={`flex flex-col items-center gap-1.5 rounded-card border p-2 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool ${
-                  selected ? "border-deepPool bg-butter" : "border-brass bg-porcelain"
+                className={`flex flex-col items-center gap-1.5 rounded-card p-2 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool ${
+                  selected ? "border border-deepPool bg-butter" : "bg-porcelain"
                 }`}
               >
                 <Avatar src={option.src} size={56} label={option.label} />
@@ -93,8 +93,8 @@ export default function ProfilePage() {
                 role="radio"
                 aria-checked={selected}
                 onClick={() => pickAssistant(option.key)}
-                className={`flex flex-col items-center gap-1.5 rounded-card border p-2 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool ${
-                  selected ? "border-deepPool bg-butter" : "border-brass bg-porcelain"
+                className={`flex flex-col items-center gap-1.5 rounded-card p-2 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool ${
+                  selected ? "border border-deepPool bg-butter" : "bg-porcelain"
                 }`}
               >
                 <Avatar src={option.src} size={56} label={option.label} />
