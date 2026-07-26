@@ -136,8 +136,9 @@ the size/type limits enforced server-side too).
 assistant's avatar is fixed — a calm pose for normal replies, a distinct
 "thinking" pose while generating — cropped from one illustrated character
 sheet (`ASSISTANT_AVATARS`). The user picks their own stand-in profile
-picture from a set of 18 illustrated character icons (`USER_AVATARS`) via the
-avatar button in the header; the choice is stored in `localStorage`, not the
+picture from a set of 18 illustrated character icons (`USER_AVATARS`) on a
+dedicated `/profile` page, reachable by tapping the avatar in the header from
+anywhere in the app; the choice is stored in `localStorage`, not the
 database — there's no `User` model to attach it to, and it's cosmetic enough
 not to need one. Every visible chat bubble reflects the *current* choice
 (not a per-message snapshot), so switching avatars re-skins the whole
@@ -168,11 +169,16 @@ next to it stays the authoritative detail either way. Free-form
 `accessories` strings aren't matched at all; they're open-ended text with no
 fixed icon set to match against.
 
-The icon PNGs (like the avatar sheets) have a checkerboard baked into their
-pixels rather than a real alpha channel, so a faint checker texture is
-visible within each icon's tile — a deliberate trade-off against the real
-risk of a naive chroma-key accidentally punching holes in legitimately
-white/gray garment icons across ~30 varied images.
+The first version of these icon PNGs (and the avatar PNGs) had a checkerboard
+baked into their pixels instead of a real alpha channel — the same problem
+across every sprite sheet up to that point, worked around by tight cropping
+alone. The user later provided re-exports with a flat, uniform background
+(solid white behind the clothing icons, a solid light-gray disc behind each
+avatar) instead of a checkerboard. A flat, consistent background color makes
+a real chroma-key safe where it wasn't before: every icon and avatar is
+reprocessed with actual alpha transparency (any near-white pixel → fully
+transparent), which is why the checker texture is gone — not just hidden by
+tight cropping.
 
 ## Failure states
 

@@ -6,7 +6,6 @@ import { ChatInput, type PendingImage } from "@/components/ChatInput";
 import { ExampleChips } from "@/components/ExampleChips";
 import { OutfitCard, type OutfitWithId } from "@/components/OutfitCard";
 import { Avatar } from "@/components/Avatar";
-import { AvatarPicker } from "@/components/AvatarPicker";
 import { MessageActions } from "@/components/MessageActions";
 import { useUserAvatar } from "@/lib/client/useUserAvatar";
 import { ASSISTANT_AVATARS, getUserAvatar } from "@/lib/avatars";
@@ -58,7 +57,7 @@ export default function ChatPage() {
   const [thinkingIndex, setThinkingIndex] = useState(0);
   const [banner, setBanner] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const { key: userAvatarKey, setKey: setUserAvatarKey } = useUserAvatar();
+  const { key: userAvatarKey } = useUserAvatar();
   const userAvatarSrc = getUserAvatar(userAvatarKey).src;
 
   useEffect(() => {
@@ -199,7 +198,7 @@ export default function ChatPage() {
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-porcelain">
-      <NavHeader current="chat" extra={<AvatarPicker avatarKey={userAvatarKey} onPick={setUserAvatarKey} />} />
+      <NavHeader current="chat" />
       <main className="flex flex-1 flex-col overflow-y-auto px-5 py-6">
         {banner && (
           <div role="alert" className="mb-4 rounded-small border border-brass bg-butter px-3 py-2 font-body text-small text-espresso">
