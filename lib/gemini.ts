@@ -47,7 +47,10 @@ Respond with ONLY a single JSON object, no markdown code fences, no commentary b
         "shoes": "generic garment description",
         "accessories": ["generic accessory", "..."]
       },
-      "rationale": "two sentences on why this works for the occasion"
+      "rationale": "two sentences on why this works for the occasion",
+      "colorStory": [
+        { "name": "short color name, e.g. sand", "hex": "#D9C7A3" }
+      ]
     }
   ]
 }
@@ -56,6 +59,7 @@ Rules:
 - Always return exactly 3 outfits in the array.
 - Describe garments generically (e.g. "white linen button-down", "cropped wide-leg jeans"). Never name a brand or retailer.
 - Do not include an "inspirationLinks" field — that is attached separately.
+- "colorStory" has 3 to 5 entries, one per significant garment color in that outfit. Every "hex" must be a valid 6-digit hex code, and every entry must correspond to a color actually named or implied by that outfit's item descriptions — never invent a color that doesn't appear in the outfit.
 - Do not wrap the JSON in markdown fences or add any surrounding text.`;
 
 const RETRY_SYSTEM_INSTRUCTION = `${SYSTEM_INSTRUCTION}

@@ -91,6 +91,7 @@ export async function POST(req: NextRequest) {
                     season: outfit.season,
                     itemsByLayer: outfit.itemsByLayer,
                     rationale: outfit.rationale,
+                    colorStory: outfit.colorStory,
                     inspirationLinks: outfit.inspirationLinks,
                     isSaved: false,
                   },

@@ -35,6 +35,10 @@ model Outfit {
   // query concern; nothing filters on individual layers.
   itemsByLayer     Json
   rationale        String   @db.Text
+  // { name: string, hex: string }[], 3-5 entries — the color story bar.
+  // Unlike inspirationLinks, these are trusted from the model directly (Zod
+  // validates hex format, not the color choice itself).
+  colorStory       Json
   // { label: string, url: string }[], 0-2 entries, sourced only from Gemini's
   // Google Search grounding metadata. Never populated from model-generated text.
   inspirationLinks Json

@@ -137,41 +137,44 @@ export default function ChatPage() {
   const isEmpty = !loadingHistory && messages.length === 0 && !pending;
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-porcelain">
       <NavHeader current="chat" />
-      <main className="flex flex-1 flex-col overflow-y-auto px-4 py-4">
+      <main className="flex flex-1 flex-col overflow-y-auto px-5 py-6">
         {banner && (
-          <div role="alert" className="mb-3 rounded-lg bg-amber-100 px-3 py-2 text-sm text-amber-900">
+          <div role="alert" className="mb-4 rounded-small border border-brass bg-butter px-3 py-2 font-body text-small text-espresso">
             {banner}
           </div>
         )}
 
         {isEmpty && (
           <div className="flex flex-1 flex-col items-center justify-center gap-6 py-8 text-center">
-            <p className="max-w-xs text-brand-700">
+            <p className="max-w-xs font-body text-body text-espresso">
               Describe an occasion, season, or vibe and get three outfit ideas with real inspiration links.
             </p>
             <ExampleChips onPick={sendMessage} />
           </div>
         )}
 
-        <ul className="flex flex-col gap-4">
+        <ul className="flex flex-col gap-6">
           {messages.map((message) => (
             <li key={message.id}>
               {message.role === "user" && (
-                <div className="ml-auto max-w-[85%] rounded-2xl bg-brand-600 px-4 py-2.5 text-white">
+                <div className="ml-auto max-w-[85%] rounded-card bg-amber px-4 py-3 font-body text-body text-espresso">
                   {message.content}
                 </div>
               )}
               {message.role === "assistant" && (
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-6">
                   {message.outfits.map((outfit) => (
                     <OutfitCard key={outfit.id} outfit={outfit} />
                   ))}
                 </div>
               )}
               {message.role === "assistant-error" && (
-                <div role="alert" className="max-w-[85%] rounded-2xl bg-red-100 px-4 py-2.5 text-red-900">
+                <div
+                  role="alert"
+                  className="max-w-[85%] rounded-card border border-brass bg-butter px-4 py-3 font-body text-body text-espresso"
+                >
                   {message.content}
                 </div>
               )}
@@ -180,7 +183,7 @@ export default function ChatPage() {
 
           {pending && (
             <li aria-live="polite">
-              <div className="max-w-[85%] rounded-2xl bg-white px-4 py-2.5 text-sm text-brand-700 shadow-sm">
+              <div className="max-w-[85%] rounded-card border border-brass bg-butter px-4 py-3 font-body text-body text-espresso">
                 {pending.retrying
                   ? "That didn't come back quite right — trying again…"
                   : pending.previewText || "Thinking…"}

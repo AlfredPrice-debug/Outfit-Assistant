@@ -9,13 +9,13 @@ const EXAMPLES = [
 
 export function ExampleChips({ onPick }: { onPick: (text: string) => void }) {
   return (
-    <div className="flex flex-wrap justify-center gap-2 px-4">
+    <div className="flex flex-wrap justify-center gap-2 px-5">
       {EXAMPLES.map((example) => (
         <button
           key={example}
           type="button"
           onClick={() => onPick(example)}
-          className="rounded-full border border-brand-200 bg-white px-3 py-2 text-sm text-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+          className="rounded-pill bg-pool px-3 py-2 font-body text-small text-espresso hover:ring-2 hover:ring-brass focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
         >
           {example}
         </button>

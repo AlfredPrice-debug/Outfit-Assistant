@@ -38,7 +38,7 @@ export function GateForm({ next, configError }: { next: string; configError: boo
   return (
     <form onSubmit={onSubmit} className="flex w-full max-w-sm flex-col gap-4" noValidate>
       <div className="flex flex-col gap-2">
-        <label htmlFor="passcode" className="text-sm font-medium text-brand-900">
+        <label htmlFor="passcode" className="font-utility text-utility uppercase text-espresso">
           Passcode
         </label>
         <input
@@ -49,22 +49,26 @@ export function GateForm({ next, configError }: { next: string; configError: boo
           required
           value={passcode}
           onChange={(e) => setPasscode(e.target.value)}
-          className="w-full rounded-lg border border-brand-200 bg-white px-4 py-3 text-base text-brand-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+          className="w-full rounded-card border border-brass bg-porcelain px-4 py-3 font-body text-body text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
           aria-invalid={Boolean(error)}
           aria-describedby={error ? "passcode-error" : undefined}
         />
       </div>
       {error && (
-        <p id="passcode-error" role="alert" className="text-sm text-red-700">
+        <p
+          id="passcode-error"
+          role="alert"
+          className="rounded-small border border-brass bg-butter px-3 py-2 font-body text-small text-espresso"
+        >
           {error}
         </p>
       )}
       <button
         type="submit"
         disabled={submitting || !passcode}
-        className="w-full rounded-lg bg-brand-600 px-4 py-3 text-base font-medium text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-900 disabled:opacity-50"
+        className="w-full rounded-pill bg-amber px-4 py-3 font-utility text-utility uppercase text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool disabled:opacity-50"
       >
-        {submitting ? "Checking…" : "Unlock"}
+        {submitting ? "Checking…" : "Unlock the app"}
       </button>
     </form>
   );

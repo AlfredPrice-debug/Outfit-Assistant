@@ -22,6 +22,7 @@ export function OutfitCard({
   const [isSaved, setIsSaved] = useState(outfit.isSaved);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isUnavailable = outfit.id.startsWith("unsaved-");
 
   async function toggleSave() {
     const next = !isSaved;
@@ -51,69 +52,85 @@ export function OutfitCard({
     .filter(([, value]) => value !== null && value !== undefined);
 
   return (
-    <article className="flex w-full flex-col gap-3 rounded-2xl border border-brand-200 bg-white p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
-        <h3 className="text-lg font-semibold text-brand-900">{outfit.title}</h3>
-        <button
-          type="button"
-          onClick={toggleSave}
-          disabled={pending || outfit.id.startsWith("unsaved-")}
-          aria-pressed={isSaved}
-          title={outfit.id.startsWith("unsaved-") ? "Unavailable while the database is down" : undefined}
-          className="shrink-0 rounded-full border border-brand-500 px-3 py-1.5 text-sm font-medium text-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:opacity-50"
-        >
-          {isSaved ? "★ Saved" : "☆ Save"}
-        </button>
-      </div>
-
-      <p className="text-xs uppercase tracking-wide text-brand-500">
-        {outfit.occasion} · {outfit.season}
-      </p>
-
-      <dl className="grid grid-cols-1 gap-x-4 gap-y-1 text-sm">
-        {layerEntries.map(([key, value]) => (
-          <div key={key} className="flex gap-2">
-            <dt className="w-24 shrink-0 font-medium text-brand-700">{LAYER_LABELS[key]}</dt>
-            <dd className="text-brand-900">{value}</dd>
-          </div>
+    <article className="flex w-full flex-col overflow-hidden rounded-card bg-butter shadow-card">
+      {/* Color story bar: the actual garment colors, so the user can scan
+          whether they own something close before reading a word. Hex values
+          come from the model, not the app palette — the one place a color
+          outside the seven tokens is expected. */}
+      <div
+        className="flex h-10 w-full shrink-0"
+        role="img"
+        aria-label={`Color story: ${outfit.colorStory.map((c) => c.name).join(", ")}`}
+      >
+        {outfit.colorStory.map((color, i) => (
+          <span key={`${color.hex}-${i}`} className="flex-1" style={{ backgroundColor: color.hex }} />
         ))}
-        {outfit.itemsByLayer.accessories.length > 0 && (
-          <div className="flex gap-2">
-            <dt className="w-24 shrink-0 font-medium text-brand-700">Accessories</dt>
-            <dd className="text-brand-900">{outfit.itemsByLayer.accessories.join(", ")}</dd>
-          </div>
-        )}
-      </dl>
-
-      <p className="text-sm text-brand-700">{outfit.rationale}</p>
-
-      <div className="border-t border-brand-100 pt-3">
-        <h4 className="text-xs font-medium uppercase tracking-wide text-brand-500">Inspiration</h4>
-        {outfit.inspirationLinks.length > 0 ? (
-          <ul className="mt-1 flex flex-col gap-1">
-            {outfit.inspirationLinks.map((link) => (
-              <li key={link.url}>
-                <a
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-brand-600 underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-                >
-                  {link.label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-1 text-sm text-brand-500">No sources were found for this look.</p>
-        )}
       </div>
 
-      {error && (
-        <p role="alert" className="text-sm text-red-700">
-          {error}
+      <div className="flex flex-col gap-4 p-4">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="font-display text-title text-espresso">{outfit.title}</h3>
+          <button
+            type="button"
+            onClick={toggleSave}
+            disabled={pending || isUnavailable}
+            aria-pressed={isSaved}
+            title={isUnavailable ? "Unavailable while the database is down" : undefined}
+            className="shrink-0 rounded-pill bg-amber px-4 py-2 font-utility text-utility uppercase text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool disabled:opacity-50"
+          >
+            {isSaved ? "Remove from saved" : "Save this look"}
+          </button>
+        </div>
+
+        <p className="font-utility text-utility uppercase text-espresso">
+          {outfit.occasion} · {outfit.season}
         </p>
-      )}
+
+        <dl className="flex flex-col gap-2">
+          {layerEntries.map(([key, value]) => (
+            <div key={key} className="flex gap-3">
+              <dt className="w-24 shrink-0 font-utility text-utility uppercase text-espresso">{LAYER_LABELS[key]}</dt>
+              <dd className="font-body text-body text-espresso">{value}</dd>
+            </div>
+          ))}
+          {outfit.itemsByLayer.accessories.length > 0 && (
+            <div className="flex gap-3">
+              <dt className="w-24 shrink-0 font-utility text-utility uppercase text-espresso">Accessories</dt>
+              <dd className="font-body text-body text-espresso">{outfit.itemsByLayer.accessories.join(", ")}</dd>
+            </div>
+          )}
+        </dl>
+
+        <p className="font-body text-body text-espresso">{outfit.rationale}</p>
+
+        <div>
+          <h4 className="font-utility text-utility uppercase text-espresso">Inspiration</h4>
+          {outfit.inspirationLinks.length > 0 ? (
+            <ul className="mt-2 flex flex-col gap-1">
+              {outfit.inspirationLinks.map((link) => (
+                <li key={link.url}>
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-body text-body text-deepPool underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-2 font-body text-body text-espresso">No sources were found for this look.</p>
+          )}
+        </div>
+
+        {error && (
+          <p role="alert" className="rounded-small bg-porcelain px-3 py-2 font-body text-small text-espresso">
+            {error}
+          </p>
+        )}
+      </div>
     </article>
   );
 }

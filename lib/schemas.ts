@@ -12,12 +12,22 @@ export const itemsByLayerSchema = z.object({
   accessories: z.array(z.string().min(1)),
 });
 
+// Garment colors for the card's color story bar. Unlike inspirationLinks,
+// these come straight from the model — there's no external source of truth
+// for "what color is this cardigan" the way there is for a citation URL — so
+// the hex format is validated but the color itself is trusted.
+export const colorStoryEntrySchema = z.object({
+  name: z.string().min(1),
+  hex: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Must be a 6-digit hex color"),
+});
+
 export const modelOutfitSchema = z.object({
   title: z.string().min(1),
   occasion: z.string().min(1),
   season: z.string().min(1),
   itemsByLayer: itemsByLayerSchema,
   rationale: z.string().min(1),
+  colorStory: z.array(colorStoryEntrySchema).min(3).max(5),
 });
 
 export const modelResponseSchema = z.object({
@@ -41,6 +51,7 @@ export const finalResponseSchema = z.object({
   outfits: z.array(finalOutfitSchema).length(3),
 });
 
+export type ColorStoryEntry = z.infer<typeof colorStoryEntrySchema>;
 export type InspirationLink = z.infer<typeof inspirationLinkSchema>;
 export type FinalOutfit = z.infer<typeof finalOutfitSchema>;
 export type FinalResponse = z.infer<typeof finalResponseSchema>;

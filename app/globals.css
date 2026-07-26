@@ -3,9 +3,7 @@
 @tailwind utilities;
 
 html {
+  /* Light only, deliberately — see project design brief. No
+     prefers-color-scheme block and no dark mode toggle. */
   color-scheme: light;
-}
-
-body {
-  @apply bg-brand-50 text-brand-900;
 }

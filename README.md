@@ -66,10 +66,14 @@ Three Prisma models, all defined in `prisma/schema.prisma`:
   so the outfit's `isSaved` state — read live from `Outfit` — never drifts out
   of sync with what's shown in chat history.
 - **`Outfit`** — `id`, `userId`, `title`, `occasion`, `season`,
-  `itemsByLayer` (JSON), `rationale`, `inspirationLinks` (JSON), `isSaved`,
-  `createdAt`. Every outfit Gemini generates is written here immediately, not
-  just the ones you save — that's what lets "unsave" be a flag flip instead
-  of a delete, and what the Saved outfits page filters against.
+  `itemsByLayer` (JSON), `rationale`, `colorStory` (JSON), `inspirationLinks`
+  (JSON), `isSaved`, `createdAt`. Every outfit Gemini generates is written
+  here immediately, not just the ones you save — that's what lets "unsave" be
+  a flag flip instead of a delete, and what the Saved outfits page filters
+  against. `colorStory` is 3-5 `{ name, hex }` entries driving the card's
+  color story bar — unlike `inspirationLinks`, these are trusted straight
+  from the model (Zod validates the hex format, not the color choice), since
+  there's no external source of truth for "what color is this cardigan".
 - **`ClosetItem`** — `id`, `userId`, `category`, `colorName`, `description`,
   `createdAt`. The table exists and nothing else does: no route, no query, no
   UI touches it in this codebase. See below.

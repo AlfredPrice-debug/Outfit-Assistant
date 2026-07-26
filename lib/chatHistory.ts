@@ -91,6 +91,7 @@ export async function listChatMessages(): Promise<ChatHistoryMessage[]> {
         season: o.season,
         itemsByLayer: o.itemsByLayer as FinalOutfit["itemsByLayer"],
         rationale: o.rationale,
+        colorStory: o.colorStory as FinalOutfit["colorStory"],
         inspirationLinks: o.inspirationLinks as FinalOutfit["inspirationLinks"],
         isSaved: o.isSaved,
       }));

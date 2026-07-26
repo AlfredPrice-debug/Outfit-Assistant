@@ -43,11 +43,11 @@ export default function SavedPage() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-porcelain">
       <NavHeader current="saved" />
-      <main className="flex flex-1 flex-col gap-4 px-4 py-4">
+      <main className="flex flex-1 flex-col gap-6 px-5 py-6">
         {error && (
-          <div role="alert" className="rounded-lg bg-red-100 px-3 py-2 text-sm text-red-900">
+          <div role="alert" className="rounded-small border border-brass bg-butter px-3 py-2 font-body text-small text-espresso">
             {error}
           </div>
         )}
@@ -55,14 +55,14 @@ export default function SavedPage() {
         {outfits && outfits.length > 0 && (
           <div className="flex gap-3">
             <div className="flex flex-1 flex-col gap-1">
-              <label htmlFor="occasion-filter" className="text-xs font-medium text-brand-700">
+              <label htmlFor="occasion-filter" className="font-utility text-utility uppercase text-espresso">
                 Occasion
               </label>
               <select
                 id="occasion-filter"
                 value={occasionFilter}
                 onChange={(e) => setOccasionFilter(e.target.value)}
-                className="rounded-lg border border-brand-200 bg-white px-2 py-2 text-sm text-brand-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                className="rounded-small border border-brass bg-porcelain px-2 py-2 font-body text-small text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
               >
                 <option value="">All</option>
                 {occasions.map((o) => (
@@ -73,14 +73,14 @@ export default function SavedPage() {
               </select>
             </div>
             <div className="flex flex-1 flex-col gap-1">
-              <label htmlFor="season-filter" className="text-xs font-medium text-brand-700">
+              <label htmlFor="season-filter" className="font-utility text-utility uppercase text-espresso">
                 Season
               </label>
               <select
                 id="season-filter"
                 value={seasonFilter}
                 onChange={(e) => setSeasonFilter(e.target.value)}
-                className="rounded-lg border border-brand-200 bg-white px-2 py-2 text-sm text-brand-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                className="rounded-small border border-brass bg-porcelain px-2 py-2 font-body text-small text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
               >
                 <option value="">All</option>
                 {seasons.map((s) => (
@@ -94,24 +94,24 @@ export default function SavedPage() {
         )}
 
         {outfits && outfits.length === 0 && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 py-12 text-center">
-            <p className="max-w-xs text-brand-700">
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 py-12 text-center">
+            <p className="max-w-xs font-body text-body text-espresso">
               No saved outfits yet. Describe an occasion in chat and save the ones you like.
             </p>
             <Link
               href="/"
-              className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-900"
+              className="rounded-pill bg-amber px-4 py-3 font-utility text-utility uppercase text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
             >
-              Go to chat
+              Describe an outfit
             </Link>
           </div>
         )}
 
         {outfits && outfits.length > 0 && filtered.length === 0 && (
-          <p className="py-8 text-center text-brand-700">No saved outfits match these filters.</p>
+          <p className="py-8 text-center font-body text-body text-espresso">No saved outfits match these filters.</p>
         )}
 
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-6">
           {filtered.map((outfit) => (
             <li key={outfit.id}>
               <OutfitCard outfit={outfit} onSaveChange={handleUnsave} />
