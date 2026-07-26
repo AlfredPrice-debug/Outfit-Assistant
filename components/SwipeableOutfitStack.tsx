@@ -110,20 +110,24 @@ function OutfitPreviewCard({ outfit }: { outfit: OutfitWithId }) {
           <span key={`${color.hex}-${i}`} className="flex-1" style={{ backgroundColor: color.hex }} />
         ))}
       </div>
-      <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
-        <h3 className="font-display text-title">{outfit.title}</h3>
-        <p className="font-utility text-utility uppercase">
+      {/* No scrolling here, on purpose: an internally scrollable card fights
+          a horizontal swipe gesture the moment a touch drifts even slightly
+          vertically, which is exactly the "page moves while swiping" bug.
+          Long text just gets clipped to a preview with a "…" instead. */}
+      <div className="flex flex-1 flex-col gap-3 overflow-hidden p-4">
+        <h3 className="truncate font-display text-title">{outfit.title}</h3>
+        <p className="truncate font-utility text-utility uppercase">
           {outfit.occasion} · {outfit.season}
         </p>
         <dl className="flex flex-col gap-1.5">
           {layerEntries.map(([key, value]) => (
             <div key={key} className="flex gap-3">
               <dt className="w-24 shrink-0 font-utility text-utility uppercase">{LAYER_LABELS[key]}</dt>
-              <dd className="font-body text-small">{value}</dd>
+              <dd className="truncate font-body text-small">{value}</dd>
             </div>
           ))}
         </dl>
-        <p className="font-body text-small">{outfit.rationale}</p>
+        <p className="line-clamp-3 font-body text-small">{outfit.rationale}</p>
       </div>
     </article>
   );

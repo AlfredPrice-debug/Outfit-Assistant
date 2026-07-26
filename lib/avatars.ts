@@ -68,25 +68,25 @@ export interface UserAvatarOption {
   src: string;
 }
 
-// Funny/punny human names instead of literal descriptions, one per animal
-// avatar. Keys and image sources are unchanged (they're storage/DB-adjacent
-// identifiers, not display text), only the label shown in the picker moves.
+// One-word, at-most-two-syllable nicknames, one per animal avatar. Keys and
+// image sources are unchanged (they're storage/DB-adjacent identifiers, not
+// display text), only the label shown in the picker moves.
 export const USER_AVATARS: UserAvatarOption[] = [
-  { key: "owl", label: "Hoot Sinatra", src: "/avatars/owl.png" },
-  { key: "toucan", label: "Beak Jagger", src: "/avatars/toucan.png" },
-  { key: "rabbit", label: "Egg Sheeran", src: "/avatars/rabbit.png" },
-  { key: "scottie", label: "Scott McTerrier", src: "/avatars/scottie.png" },
-  { key: "gorilla", label: "Congo Malone", src: "/avatars/gorilla.png" },
-  { key: "parrot", label: "Captain Squawkbeard", src: "/avatars/parrot.png" },
-  { key: "monkey", label: "Bananarama Jones", src: "/avatars/monkey.png" },
-  { key: "shepherd", label: "Sherlock Bones", src: "/avatars/shepherd.png" },
-  { key: "fox", label: "Ferris Fox-eller", src: "/avatars/fox.png" },
-  { key: "walrus", label: "Sir Tuskalot", src: "/avatars/walrus.png" },
-  { key: "ninjacat", label: "Meow-t Damon", src: "/avatars/ninjacat.png" },
-  { key: "yorkie", label: "Beau Bradley", src: "/avatars/yorkie.png" },
-  { key: "catpearls", label: "Audrey Hepcat", src: "/avatars/catpearls.png" },
-  { key: "badger", label: "Vincent Van Badger", src: "/avatars/badger.png" },
-  { key: "hippo", label: "Harry Pota-mus", src: "/avatars/hippo.png" },
+  { key: "owl", label: "Hoot", src: "/avatars/owl.png" },
+  { key: "toucan", label: "Beak", src: "/avatars/toucan.png" },
+  { key: "rabbit", label: "Egg", src: "/avatars/rabbit.png" },
+  { key: "scottie", label: "Scotty", src: "/avatars/scottie.png" },
+  { key: "gorilla", label: "Congo", src: "/avatars/gorilla.png" },
+  { key: "parrot", label: "Squawk", src: "/avatars/parrot.png" },
+  { key: "monkey", label: "Nana", src: "/avatars/monkey.png" },
+  { key: "shepherd", label: "Bones", src: "/avatars/shepherd.png" },
+  { key: "fox", label: "Ferris", src: "/avatars/fox.png" },
+  { key: "walrus", label: "Tusk", src: "/avatars/walrus.png" },
+  { key: "ninjacat", label: "Meow", src: "/avatars/ninjacat.png" },
+  { key: "yorkie", label: "Beau", src: "/avatars/yorkie.png" },
+  { key: "catpearls", label: "Audrey", src: "/avatars/catpearls.png" },
+  { key: "badger", label: "Vincent", src: "/avatars/badger.png" },
+  { key: "hippo", label: "Harry", src: "/avatars/hippo.png" },
 ];
 
 export const DEFAULT_USER_AVATAR_KEY: UserAvatarKey = "fox";

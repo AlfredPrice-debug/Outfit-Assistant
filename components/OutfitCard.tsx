@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
-import { SearchIcon } from "lucide-react";
+import { BookmarkIcon, SearchIcon, ShirtIcon } from "lucide-react";
 import type { OutfitWithId } from "@/lib/apiTypes";
-import { addOutfitToCloset } from "@/lib/client/closet";
+import { addOutfitToCloset, removeClosetItems } from "@/lib/client/closet";
 import { readableTextColor, FALLBACK_CARD_HEX } from "@/lib/colorContrast";
 
 export type { OutfitWithId };
@@ -18,12 +18,10 @@ const LAYER_LABELS: Record<"top" | "bottom" | "outerwear" | "shoes", string> = {
 export function OutfitCard({
   outfit,
   onSaveChange,
-  showAddToCloset = false,
   matchOutfitColor = false,
 }: {
   outfit: OutfitWithId;
   onSaveChange?: (id: string, isSaved: boolean) => void;
-  showAddToCloset?: boolean;
   // When true, the card keeps the same lead-color background it had as a
   // swipe card instead of switching to the standard gradient, so a kept
   // outfit doesn't visibly change color the moment it lands in the chat.
@@ -34,8 +32,12 @@ export function OutfitCard({
   const [error, setError] = useState<string | null>(null);
   const isUnavailable = outfit.id.startsWith("unsaved-");
 
-  const [addedToCloset, setAddedToCloset] = useState(false);
-  const [addingToCloset, setAddingToCloset] = useState(false);
+  // Empty means "not in the closet"; a non-empty list is the ids of the rows
+  // this card itself created, so toggling off deletes exactly those rows
+  // rather than guessing which closet rows came from where.
+  const [closetItemIds, setClosetItemIds] = useState<string[]>([]);
+  const isInCloset = closetItemIds.length > 0;
+  const [closetPending, setClosetPending] = useState(false);
   const [closetError, setClosetError] = useState<string | null>(null);
 
   async function toggleSave() {
@@ -61,16 +63,21 @@ export function OutfitCard({
     }
   }
 
-  async function handleAddToCloset() {
-    setAddingToCloset(true);
+  async function toggleCloset() {
+    setClosetPending(true);
     setClosetError(null);
     try {
-      await addOutfitToCloset(outfit);
-      setAddedToCloset(true);
+      if (isInCloset) {
+        await removeClosetItems(closetItemIds);
+        setClosetItemIds([]);
+      } else {
+        const ids = await addOutfitToCloset(outfit);
+        setClosetItemIds(ids);
+      }
     } catch (err) {
-      setClosetError(err instanceof Error ? err.message : "Couldn't add this outfit to your closet.");
+      setClosetError(err instanceof Error ? err.message : "Couldn't update your closet.");
     } finally {
-      setAddingToCloset(false);
+      setClosetPending(false);
     }
   }
 
@@ -112,16 +119,34 @@ export function OutfitCard({
           <h3 style={textStyle} className="font-display text-title text-espresso">
             {outfit.title}
           </h3>
-          <button
-            type="button"
-            onClick={toggleSave}
-            disabled={pending || isUnavailable}
-            aria-pressed={isSaved}
-            title={isUnavailable ? "Unavailable while the database is down" : undefined}
-            className="shrink-0 rounded-pill bg-amber px-4 py-2 font-utility text-utility uppercase text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool disabled:opacity-50"
-          >
-            {isSaved ? "Remove OutFit Card" : "Save OutFit Card"}
-          </button>
+          <div className="flex shrink-0 gap-2">
+            <button
+              type="button"
+              onClick={toggleSave}
+              disabled={pending || isUnavailable}
+              aria-pressed={isSaved}
+              aria-label={isSaved ? "Remove OutFit Card" : "Save OutFit Card"}
+              title={isUnavailable ? "Unavailable while the database is down" : isSaved ? "Remove OutFit Card" : "Save OutFit Card"}
+              className={`rounded-pill p-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool disabled:opacity-50 ${
+                isSaved ? "bg-amber text-espresso" : "border border-brass text-espresso"
+              }`}
+            >
+              <BookmarkIcon className="size-4" aria-hidden="true" fill={isSaved ? "currentColor" : "none"} />
+            </button>
+            <button
+              type="button"
+              onClick={toggleCloset}
+              disabled={closetPending}
+              aria-pressed={isInCloset}
+              aria-label={isInCloset ? "Remove from closet" : "Add to closet"}
+              title={isInCloset ? "Remove from closet" : "Add to closet"}
+              className={`rounded-pill p-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool disabled:opacity-50 ${
+                isInCloset ? "bg-amber text-espresso" : "border border-brass text-espresso"
+              }`}
+            >
+              <ShirtIcon className="size-4" aria-hidden="true" fill={isInCloset ? "currentColor" : "none"} />
+            </button>
+          </div>
         </div>
 
         <p style={textStyle} className="font-utility text-utility uppercase text-espresso">
@@ -188,22 +213,10 @@ export function OutfitCard({
           </p>
         )}
 
-        {showAddToCloset && (
-          <div className="flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={handleAddToCloset}
-              disabled={addingToCloset || addedToCloset}
-              className="rounded-pill border border-brass px-4 py-2 font-utility text-utility uppercase text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool disabled:opacity-50"
-            >
-              {addedToCloset ? "Added to closet" : "Add to closet"}
-            </button>
-            {closetError && (
-              <p role="alert" className="rounded-small bg-porcelain px-3 py-2 font-body text-small text-espresso">
-                {closetError}
-              </p>
-            )}
-          </div>
+        {closetError && (
+          <p role="alert" className="rounded-small bg-porcelain px-3 py-2 font-body text-small text-espresso">
+            {closetError}
+          </p>
         )}
       </div>
     </article>

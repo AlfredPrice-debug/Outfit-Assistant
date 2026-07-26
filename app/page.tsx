@@ -380,7 +380,7 @@ export default function ChatPage() {
                         {message.outfits
                           .filter((outfit) => message.swipeState!.kept.includes(outfit.id))
                           .map((outfit) => (
-                            <OutfitCard key={outfit.id} outfit={outfit} showAddToCloset matchOutfitColor />
+                            <OutfitCard key={outfit.id} outfit={outfit} matchOutfitColor />
                           ))}
                       </>
                     ) : (
