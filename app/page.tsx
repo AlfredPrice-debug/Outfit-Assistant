@@ -14,16 +14,38 @@ type UIMessage =
   | { id: string; role: "assistant-error"; content: string };
 
 interface PendingState {
-  previewText: string;
   retrying: boolean;
 }
+
+// Real progress from the model is just growing JSON — not something worth
+// showing a person. A wardrobe joke is a better use of the wait than a raw
+// text dump, and it doesn't need to be literally true to feel like progress.
+const THINKING_MESSAGES = [
+  "Currently butt naked, one sec…",
+  "Digging through a thousand shoes…",
+  "Interrogating the closet…",
+  "Untangling a pile of hangers…",
+  "Arguing with itself about socks…",
+  "Asking the mirror for a second opinion…",
+  "Trying on look number 47…",
+  "Googling \"does this match\"…",
+];
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<UIMessage[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [pending, setPending] = useState<PendingState | null>(null);
+  const [thinkingIndex, setThinkingIndex] = useState(0);
   const [banner, setBanner] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!pending || pending.retrying) return;
+    const id = setInterval(() => {
+      setThinkingIndex((i) => (i + 1) % THINKING_MESSAGES.length);
+    }, 2200);
+    return () => clearInterval(id);
+  }, [pending, pending?.retrying]);
 
   useEffect(() => {
     let cancelled = false;
@@ -58,7 +80,8 @@ export default function ChatPage() {
   async function sendMessage(text: string) {
     setBanner(null);
     setMessages((prev) => [...prev, { id: `local-${prev.length}-${text.slice(0, 8)}`, role: "user", content: text }]);
-    setPending({ previewText: "", retrying: false });
+    setThinkingIndex(Math.floor(Math.random() * THINKING_MESSAGES.length));
+    setPending({ retrying: false });
 
     try {
       const res = await fetch("/api/chat", {
@@ -87,9 +110,10 @@ export default function ChatPage() {
           if (!line.trim()) continue;
           const event: ChatStreamEvent = JSON.parse(line);
           if (event.type === "chunk") {
-            setPending((prev) => ({ previewText: (prev?.previewText ?? "") + event.text, retrying: false }));
+            // Real generation progress, but raw JSON isn't meaningful to show
+            // — the thinking message rotation above is the visible signal.
           } else if (event.type === "retry") {
-            setPending({ previewText: "", retrying: true });
+            setPending({ retrying: true });
           } else if (event.type === "warning") {
             setBanner(event.message);
           } else if (event.type === "result") {
@@ -186,7 +210,7 @@ export default function ChatPage() {
               <div className="max-w-[85%] rounded-card border border-brass bg-butter px-4 py-3 font-body text-body text-espresso">
                 {pending.retrying
                   ? "That didn't come back quite right — trying again…"
-                  : pending.previewText || "Thinking…"}
+                  : THINKING_MESSAGES[thinkingIndex]}
               </div>
             </li>
           )}

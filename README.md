@@ -1,4 +1,4 @@
-# Outfit Assistant
+# Outfit Me
 
 A single-user web app that turns a plain-language request — "summer outfit
 ideas for a coffee date" — into three concrete, wearable outfit suggestions,
@@ -6,7 +6,7 @@ each with real inspiration links. No video feed to reverse-engineer, no
 scrolling: you describe an occasion and get back an outfit you can actually
 put together from clothes you likely already own.
 
-Outfit Assistant does **not** know what's in your closet in v1. Suggestions
+Outfit Me does **not** know what's in your closet in v1. Suggestions
 come from Gemini's general fashion knowledge, grounded in live Google Search
 results so the inspiration links are real pages, not invented URLs. See
 [Planned for v2](#planned-for-v2-closet-awareness) below.

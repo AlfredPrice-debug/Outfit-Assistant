@@ -3,7 +3,7 @@ import Link from "next/link";
 export function NavHeader({ current }: { current: "chat" | "saved" }) {
   return (
     <header className="flex items-center justify-between border-b border-brass px-5 py-4">
-      <h1 className="font-display text-title text-espresso">Outfit Assistant</h1>
+      <h1 className="font-display text-title text-espresso">Outfit Me</h1>
       <nav aria-label="Primary">
         {current === "chat" ? (
           <Link

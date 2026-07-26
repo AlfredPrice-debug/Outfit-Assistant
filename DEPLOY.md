@@ -1,4 +1,4 @@
-# Deploying Outfit Assistant to Railway
+# Deploying Outfit Me to Railway
 
 Follow these steps in order. You'll need a Railway account and a Google account
 for Gemini API access. Nothing here requires you to have deployed anything

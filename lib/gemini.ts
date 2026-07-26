@@ -28,7 +28,7 @@ export interface ChatTurn {
 // A JSON contract without inspirationLinks: the model is never asked for
 // URLs, so it can never be the source of a fabricated one. Real links are
 // spliced in afterward from Google Search grounding metadata.
-const SYSTEM_INSTRUCTION = `You are Outfit Assistant, a stylist that turns a short request (an occasion, season, or vibe) into concrete outfit ideas the user can put together from clothes they likely already own.
+const SYSTEM_INSTRUCTION = `You are Outfit Me, a stylist that turns a short request (an occasion, season, or vibe) into concrete outfit ideas the user can put together from clothes they likely already own.
 
 Use Google Search to ground your suggestions in current, real fashion context.
 

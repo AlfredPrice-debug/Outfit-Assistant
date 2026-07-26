@@ -1,4 +1,4 @@
-// Prisma schema for Outfit Assistant.
+// Prisma schema for Outfit Me.
 //
 // Every model carries a `userId` column defaulted to a single owner value from
 // OWNER_ID. There is no User model and no auth relation in v1 — this is a
