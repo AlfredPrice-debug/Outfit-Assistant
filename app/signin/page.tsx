@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { signIn } from "@/auth";
 
 function errorMessage(code: string | undefined): string | null {
@@ -19,7 +20,10 @@ export default function SignInPage({
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-app flex-col items-center justify-center gap-8 bg-porcelain px-5 py-12">
       <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="font-display text-display text-espresso">OutFit Me</h1>
+        <div className="flex items-center gap-2">
+          <Image src="/logo-icon.png" alt="" width={28} height={40} aria-hidden="true" />
+          <Image src="/logo-wordmark.png" alt="OutFit Me" width={180} height={40} priority />
+        </div>
         <p className="font-body text-body text-espresso">Sign in to continue.</p>
       </div>
       <form
