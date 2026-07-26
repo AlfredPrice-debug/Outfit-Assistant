@@ -64,12 +64,21 @@ Still in the app service's **Variables** tab, add:
 |---|---|
 | `GEMINI_API_KEY` | The key from step 1 |
 | `AUTH_SECRET` | Generate with `npx auth secret` (or any random 32+ byte string) |
+| `AUTH_URL` | Your Railway service's public URL, e.g. `https://your-app.up.railway.app` — **required**, see warning below |
 | `AUTH_GOOGLE_ID` | The Client ID from step 5 |
 | `AUTH_GOOGLE_SECRET` | The Client Secret from step 5 |
 | `ALLOWED_EMAILS` | Comma-separated emails allowed to sign in, e.g. `you@example.com` |
 
 `DATABASE_URL` should already be present from step 4 as a reference variable.
-Confirm all six variables listed in `.env.example` are set before continuing.
+Confirm all seven variables listed in `.env.example` are set before continuing.
+
+**`AUTH_URL` is not optional on Railway.** Without it, Auth.js can't
+reliably determine the app's own public URL from the incoming request on
+Railway's infrastructure, and silently builds sign-in redirects pointing at
+the container's *internal* address instead (you'll know this is happening
+if, after approving Google sign-in, your browser lands on something like
+`localhost:8080` and fails to connect — that's the app's own internal bind
+address leaking out, not a real hostname).
 
 ## 7. Deploy
 
@@ -179,3 +188,12 @@ then switch to Proxied again.
   (but works on the Railway subdomain): the new domain's callback URL
   hasn't been added to the Google OAuth client's Authorized redirect URIs
   yet — see step 10 above.
+- **After approving Google sign-in, the browser tries to load `localhost:8080`
+  and fails to connect**: `AUTH_URL` isn't set (or isn't set to your real
+  public Railway URL). See the warning under step 6 — this is a required
+  variable on Railway, not optional.
+- **`redirect_uri_mismatch` even though the URI in Google Cloud Console
+  looks right**: double-check `AUTH_GOOGLE_ID`/`AUTH_GOOGLE_SECRET` in
+  Railway actually belong to the same OAuth client you just edited — if
+  you created more than one client while setting this up, it's easy to
+  register the redirect URI on the wrong one.

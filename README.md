@@ -45,11 +45,12 @@ results so the inspiration links are real pages, not invented URLs. See
    ```bash
    npm install
    ```
-2. Copy `.env.example` to `.env` and fill in all six variables (see below).
-   You'll need a local Postgres database — `DATABASE_URL` should point at it —
-   and a Google Cloud OAuth Client ID/Secret (see `DEPLOY.md` for the exact
-   steps, including the `http://localhost:3000/api/auth/callback/google`
-   redirect URI to register for local dev).
+2. Copy `.env.example` to `.env` and fill in all six local-dev variables (see
+   below — `AUTH_URL` is production-only, not needed here). You'll need a
+   local Postgres database — `DATABASE_URL` should point at it — and a
+   Google Cloud OAuth Client ID/Secret (see `DEPLOY.md` for the exact steps,
+   including the `http://localhost:3000/api/auth/callback/google` redirect
+   URI to register for local dev).
 3. Apply the schema:
    ```bash
    npx prisma migrate dev
@@ -63,8 +64,9 @@ results so the inspiration links are real pages, not invented URLs. See
 
 ## Environment variables
 
-All six are required — the app fails with a readable error rather than a
-blank screen if one is missing. See `.env.example` for the same list with
+Six are required locally — the app fails with a readable error rather than a
+blank screen if one is missing. `AUTH_URL` is a seventh, production-only
+variable (see its row below). See `.env.example` for the same list with
 inline comments.
 
 | Variable | Purpose |
@@ -72,6 +74,7 @@ inline comments.
 | `GEMINI_API_KEY` | Server-side only. Never sent to the client, never logged, never returned in a response body. All Gemini calls happen inside route handlers (`app/api/chat/route.ts`). |
 | `DATABASE_URL` | Postgres connection string. Railway injects this automatically once you link a Postgres instance (see `DEPLOY.md`). |
 | `AUTH_SECRET` | Auth.js's session/token encryption secret. Generate with `npx auth secret`. |
+| `AUTH_URL` | **Production only** (e.g. Railway). The app's own public URL. Without it, Auth.js can't reliably infer its public URL on Railway's infrastructure and silently builds sign-in redirects pointing at the container's internal address instead — the symptom is landing on an unreachable `localhost:8080` right after approving Google sign-in. Not needed locally (`http://localhost:3000` is inferred fine). |
 | `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Google OAuth 2.0 Client ID/Secret (see `DEPLOY.md`). |
 | `ALLOWED_EMAILS` | Comma-separated email allow-list, checked server-side in `auth.ts`'s `signIn` callback. See [Auth](#auth). |
 
