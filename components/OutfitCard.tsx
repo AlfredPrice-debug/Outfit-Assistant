@@ -127,11 +127,12 @@ export function OutfitCard({
               aria-pressed={isSaved}
               aria-label={isSaved ? "Remove OutFit Card" : "Save OutFit Card"}
               title={isUnavailable ? "Unavailable while the database is down" : isSaved ? "Remove OutFit Card" : "Save OutFit Card"}
-              className={`rounded-pill p-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool disabled:opacity-50 ${
+              className={`flex flex-col items-center gap-0.5 rounded-card px-2.5 py-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool disabled:opacity-50 ${
                 isSaved ? "bg-amber text-espresso" : "border border-brass text-espresso"
               }`}
             >
               <BookmarkIcon className="size-4" aria-hidden="true" fill={isSaved ? "currentColor" : "none"} />
+              <span className="font-utility text-[10px] uppercase leading-none">{isSaved ? "Saved" : "Save"}</span>
             </button>
             <button
               type="button"
@@ -140,11 +141,12 @@ export function OutfitCard({
               aria-pressed={isInCloset}
               aria-label={isInCloset ? "Remove from closet" : "Add to closet"}
               title={isInCloset ? "Remove from closet" : "Add to closet"}
-              className={`rounded-pill p-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool disabled:opacity-50 ${
+              className={`flex flex-col items-center gap-0.5 rounded-card px-2.5 py-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool disabled:opacity-50 ${
                 isInCloset ? "bg-amber text-espresso" : "border border-brass text-espresso"
               }`}
             >
               <ShirtIcon className="size-4" aria-hidden="true" fill={isInCloset ? "currentColor" : "none"} />
+              <span className="font-utility text-[10px] uppercase leading-none">{isInCloset ? "In Closet" : "Closet"}</span>
             </button>
           </div>
         </div>

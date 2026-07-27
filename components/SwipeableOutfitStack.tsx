@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
-import { CheckIcon, XIcon, Undo2Icon } from "lucide-react";
+import { CheckIcon, XIcon } from "lucide-react";
 import type { OutfitWithId } from "@/lib/apiTypes";
 import { readableTextColor, FALLBACK_CARD_HEX } from "@/lib/colorContrast";
+import { OutfitDetailModal } from "./OutfitDetailModal";
 
 const LAYER_LABELS: Record<"top" | "bottom" | "outerwear" | "shoes", string> = {
   top: "Top",
@@ -15,11 +16,6 @@ const LAYER_LABELS: Record<"top" | "bottom" | "outerwear" | "shoes", string> = {
 
 const SWIPE_THRESHOLD = 120;
 
-interface SwipeHistoryEntry {
-  id: string;
-  direction: "left" | "right";
-}
-
 // Drag-to-decide card, used by SwipeableOutfitStack for the top (interactive)
 // card in the stack. Kept separate from the plain preview below it so only
 // the top card pays for framer-motion's drag/gesture wiring.
@@ -27,10 +23,12 @@ function DraggableOutfitPreview({
   outfit,
   exitDirection,
   onDecide,
+  onOpenDetail,
 }: {
   outfit: OutfitWithId;
   exitDirection: "left" | "right" | null;
   onDecide: (direction: "left" | "right") => void;
+  onOpenDetail: () => void;
 }) {
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-12, 12]);
@@ -47,6 +45,10 @@ function DraggableOutfitPreview({
         if (info.offset.x > SWIPE_THRESHOLD) onDecide("right");
         else if (info.offset.x < -SWIPE_THRESHOLD) onDecide("left");
       }}
+      // Fires only for a genuine tap (framer-motion distinguishes this from
+      // the drag gesture above by movement distance), so swiping never
+      // accidentally opens the detail view.
+      onTap={onOpenDetail}
       initial={{ scale: 0.95, y: 12, opacity: 0 }}
       animate={
         exitDirection
@@ -129,6 +131,9 @@ function OutfitPreviewCard({ outfit }: { outfit: OutfitWithId }) {
         </dl>
         <p className="line-clamp-3 font-body text-small">{outfit.rationale}</p>
       </div>
+      <p className="shrink-0 px-4 pb-3 text-right font-utility text-utility uppercase opacity-70">
+        Tap for details
+      </p>
     </article>
   );
 }
@@ -138,16 +143,14 @@ export function SwipeableOutfitStack({
   keptIds,
   discardedIds,
   onDecide,
-  onUndo,
 }: {
   outfits: OutfitWithId[];
   keptIds: string[];
   discardedIds: string[];
   onDecide: (outfitId: string, direction: "left" | "right") => void;
-  onUndo: (outfitId: string) => void;
 }) {
-  const [history, setHistory] = useState<SwipeHistoryEntry[]>([]);
   const [exiting, setExiting] = useState<{ id: string; direction: "left" | "right" } | null>(null);
+  const [detailOutfit, setDetailOutfit] = useState<OutfitWithId | null>(null);
 
   const remaining = outfits.filter((o) => !keptIds.includes(o.id) && !discardedIds.includes(o.id));
   const total = outfits.length;
@@ -158,17 +161,9 @@ export function SwipeableOutfitStack({
     if (!top || exiting) return;
     setExiting({ id: top.id, direction });
     setTimeout(() => {
-      setHistory((prev) => [...prev, { id: top.id, direction }]);
       onDecide(top.id, direction);
       setExiting(null);
     }, 250);
-  }
-
-  function undo() {
-    const last = history[history.length - 1];
-    if (!last) return;
-    setHistory((prev) => prev.slice(0, -1));
-    onUndo(last.id);
   }
 
   if (remaining.length === 0) {
@@ -207,23 +202,13 @@ export function SwipeableOutfitStack({
                 outfit={outfit}
                 exitDirection={exiting?.id === outfit.id ? exiting.direction : null}
                 onDecide={decide}
+                onOpenDetail={() => setDetailOutfit(outfit)}
               />
             );
           })}
         </AnimatePresence>
       </div>
       <div className="flex items-center justify-center gap-3">
-        <button
-          type="button"
-          onClick={undo}
-          disabled={history.length === 0}
-          aria-label="Undo last swipe"
-          title="Undo last swipe"
-          className="flex items-center gap-1.5 rounded-pill border border-brass px-4 py-2 font-utility text-utility uppercase text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool disabled:opacity-40"
-        >
-          <Undo2Icon className="size-4" aria-hidden="true" />
-          Undo
-        </button>
         <button
           type="button"
           onClick={() => decide("left")}
@@ -243,6 +228,9 @@ export function SwipeableOutfitStack({
           Keep in Chat
         </button>
       </div>
+      {detailOutfit && (
+        <OutfitDetailModal outfit={detailOutfit} matchOutfitColor onClose={() => setDetailOutfit(null)} />
+      )}
     </div>
   );
 }

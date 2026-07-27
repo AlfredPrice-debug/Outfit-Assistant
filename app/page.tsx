@@ -97,21 +97,6 @@ const THINKING_MESSAGES = [
   "Recovering from a static cling incident…",
 ];
 
-function formatOutfitsAsText(outfits: OutfitWithId[]): string {
-  return outfits
-    .map((outfit, i) => {
-      const layers = [
-        `Top: ${outfit.itemsByLayer.top}`,
-        `Bottom: ${outfit.itemsByLayer.bottom}`,
-        outfit.itemsByLayer.outerwear ? `Outerwear: ${outfit.itemsByLayer.outerwear}` : null,
-        `Shoes: ${outfit.itemsByLayer.shoes}`,
-        outfit.itemsByLayer.accessories.length ? `Accessories: ${outfit.itemsByLayer.accessories.join(", ")}` : null,
-      ].filter(Boolean);
-      return `${i + 1}. ${outfit.title} (${outfit.occasion}, ${outfit.season})\n${layers.join("\n")}\n${outfit.rationale}`;
-    })
-    .join("\n\n");
-}
-
 export default function ChatPage() {
   const [messages, setMessages] = useState<UIMessage[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
@@ -177,8 +162,8 @@ export default function ChatPage() {
   }, [messages, pending]);
 
   function handleSwipeDecide(messageId: string, outfitId: string, direction: "left" | "right") {
-    setMessages((prev) =>
-      prev.map((m) => {
+    setMessages((prev) => {
+      const updated = prev.map((m) => {
         if (m.id !== messageId || m.role !== "assistant" || !m.swipeState) return m;
         return {
           ...m,
@@ -187,8 +172,32 @@ export default function ChatPage() {
             discarded: direction === "left" ? [...m.swipeState.discarded, outfitId] : m.swipeState.discarded,
           },
         };
-      }),
-    );
+      });
+
+      // Once every card in a stack has been decided, if none were kept, have
+      // Outfit MC check in rather than silently ending the turn there.
+      const target = updated.find((m) => m.id === messageId);
+      const followupId = `followup-${messageId}`;
+      const alreadyShown = updated.some((m) => m.id === followupId);
+      const fullyDiscarded =
+        target?.role === "assistant" &&
+        target.swipeState &&
+        target.swipeState.kept.length === 0 &&
+        target.swipeState.kept.length + target.swipeState.discarded.length === target.outfits.length;
+
+      if (fullyDiscarded && !alreadyShown) {
+        return [
+          ...updated,
+          {
+            id: followupId,
+            role: "assistant-note" as const,
+            content:
+              "Looks like you didn't love those. I can share more if you'd like, or tell me what to change and I'll refine it.",
+          },
+        ];
+      }
+      return updated;
+    });
   }
 
   function handleModeChoice(mode: "conversation" | "swipe", label: string) {
@@ -199,21 +208,6 @@ export default function ChatPage() {
       { id: `mode-answer-${prev.length}`, role: "user", content: label },
       { id: `ideas-question-${prev.length + 1}`, role: "assistant-note", content: "What ideas are you looking for?" },
     ]);
-  }
-
-  function handleSwipeUndo(messageId: string, outfitId: string) {
-    setMessages((prev) =>
-      prev.map((m) => {
-        if (m.id !== messageId || m.role !== "assistant" || !m.swipeState) return m;
-        return {
-          ...m,
-          swipeState: {
-            kept: m.swipeState.kept.filter((id) => id !== outfitId),
-            discarded: m.swipeState.discarded.filter((id) => id !== outfitId),
-          },
-        };
-      }),
-    );
   }
 
   async function sendMessage(text: string) {
@@ -375,7 +369,6 @@ export default function ChatPage() {
                           keptIds={message.swipeState.kept}
                           discardedIds={message.swipeState.discarded}
                           onDecide={(outfitId, direction) => handleSwipeDecide(message.id, outfitId, direction)}
-                          onUndo={(outfitId) => handleSwipeUndo(message.id, outfitId)}
                         />
                         {message.outfits
                           .filter((outfit) => message.swipeState!.kept.includes(outfit.id))
@@ -387,10 +380,7 @@ export default function ChatPage() {
                       message.outfits.map((outfit) => <OutfitCard key={outfit.id} outfit={outfit} />)
                     )}
                   </div>
-                  <MessageActions
-                    onRetry={() => sendMessage(message.sourceMessage)}
-                    onCopy={() => formatOutfitsAsText(message.outfits)}
-                  />
+                  <MessageActions onRetry={() => sendMessage(message.sourceMessage)} />
                 </div>
               )}
               {message.role === "assistant-error" && (

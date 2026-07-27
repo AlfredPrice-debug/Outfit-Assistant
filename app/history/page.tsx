@@ -62,10 +62,6 @@ export default function HistoryPage() {
       <NavHeader current="history" />
       <main className="flex flex-1 flex-col gap-4 px-5 py-6">
         <h2 className="font-display text-title text-espresso">Chat history</h2>
-        <p className="font-body text-body text-espresso">
-          Old conversations, archived whenever you start a new chat. Resume one to pick back up, or delete it for
-          good.
-        </p>
 
         {error && (
           <p role="alert" className="font-body text-small text-espresso">

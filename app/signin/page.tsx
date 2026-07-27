@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { signIn } from "@/auth";
+import { GoogleIcon } from "@/components/GoogleIcon";
 
 function errorMessage(code: string | undefined): string | null {
   if (!code) return null;
@@ -20,8 +21,8 @@ export default function SignInPage({
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-app flex-col items-center justify-center gap-8 bg-porcelain px-5 py-12">
       <div className="flex flex-col items-center gap-2 text-center">
-        <div className="flex items-center gap-2">
-          <Image src="/logo-icon.png" alt="" width={28} height={40} aria-hidden="true" />
+        <div className="flex flex-col items-center gap-3">
+          <Image src="/logo-icon.png" alt="" width={40} height={56} aria-hidden="true" />
           <Image src="/logo-wordmark.png" alt="OutFit Me" width={180} height={40} priority />
         </div>
         <p className="font-body text-body text-espresso">Sign in to continue.</p>
@@ -43,8 +44,9 @@ export default function SignInPage({
         )}
         <button
           type="submit"
-          className="w-full rounded-pill bg-amber px-4 py-3 font-utility text-utility uppercase text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
+          className="flex w-full items-center justify-center gap-3 rounded-pill border border-brass bg-transparent px-4 py-3 font-body text-body text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
         >
+          <GoogleIcon className="size-5 shrink-0" />
           Continue with Google
         </button>
       </form>
