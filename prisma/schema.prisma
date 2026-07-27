@@ -134,3 +134,15 @@ model ClosetItem {
 
   @@index([userId])
 }
+
+// One row per user, upserted from the Settings page. userId is the primary
+// key (not a foreign key to User, matching every other model's convention
+// in this file) since a settings row can't exist before a user does, so
+// there's no orphaning concern to design around here.
+model UserSettings {
+  userId            String   @id
+  preferredChatMode String   @default("conversation")
+  swipeCardCount    Int      @default(5)
+  chatFollowUpCount Int      @default(5)
+  updatedAt         DateTime @updatedAt
+}

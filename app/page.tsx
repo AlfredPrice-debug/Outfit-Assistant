@@ -25,28 +25,19 @@ type UIMessage =
       swipeState?: { kept: string[]; discarded: string[] };
     }
   | { id: string; role: "assistant-error"; content: string; sourceMessage: string }
-  // Plain Outfit MC text bubbles that aren't outfit results: the intro, the
-  // conversation/swipe question, and the follow-up prompt. `choices` is only
-  // present on the mode question, and only rendered while chatMode is unset.
-  | {
-      id: string;
-      role: "assistant-note";
-      content: string;
-      choices?: { label: string; mode: "conversation" | "swipe" }[];
-    };
+  // A live conversational reply from conversation mode: no outfits yet,
+  // just Outfit MC actually talking. Distinct from assistant-note (fixed
+  // scripted UI copy) since this carries a sourceMessage tied to a real
+  // model turn.
+  | { id: string; role: "assistant-chat"; content: string; sourceMessage: string }
+  // Plain Outfit MC text bubbles that aren't outfit results: the intro and
+  // the all-discarded-swipe follow-up prompt.
+  | { id: string; role: "assistant-note"; content: string };
 
 function buildIntroMessages(): UIMessage[] {
   return [
     { id: "intro", role: "assistant-note", content: "Hi, I'm Outfit MC!" },
-    {
-      id: "mode-question",
-      role: "assistant-note",
-      content: "How do you want to share your outfits?",
-      choices: [
-        { label: "Let me swipe!", mode: "swipe" },
-        { label: "Let's talk", mode: "conversation" },
-      ],
-    },
+    { id: "ideas-question", role: "assistant-note", content: "What ideas are you looking for?" },
   ];
 }
 
@@ -103,7 +94,10 @@ export default function ChatPage() {
   const [pending, setPending] = useState<PendingState | null>(null);
   const [thinkingIndex, setThinkingIndex] = useState(0);
   const [banner, setBanner] = useState<string | null>(null);
-  const [chatMode, setChatMode] = useState<"conversation" | "swipe" | null>(null);
+  // Defaults to "conversation" (matching the Settings page's own default)
+  // until the user's actual preferredChatMode loads; updated again if
+  // Outfit MC detects a mid-conversation request to switch to swipe.
+  const [chatMode, setChatMode] = useState<"conversation" | "swipe">("conversation");
   const bottomRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef(0);
   const { key: userAvatarKey } = useUserAvatar();
@@ -124,15 +118,27 @@ export default function ChatPage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/chat");
-        if (!res.ok) throw new Error();
-        const data: { messages: ChatHistoryMessage[] } = await res.json();
+        const [settingsRes, historyRes] = await Promise.all([fetch("/api/settings"), fetch("/api/chat")]);
+
+        if (settingsRes.ok) {
+          const settingsData: { settings: { preferredChatMode: "conversation" | "swipe" } } = await settingsRes.json();
+          if (!cancelled) setChatMode(settingsData.settings.preferredChatMode);
+        }
+
+        if (!historyRes.ok) throw new Error();
+        const data: { messages: ChatHistoryMessage[] } = await historyRes.json();
         if (cancelled) return;
         let lastUserText = "";
         const loaded: UIMessage[] = data.messages.map((m) => {
           if (m.role === "user") {
             lastUserText = m.content ?? "";
             return { id: m.id, role: "user", content: m.content ?? "" };
+          }
+          // A chat-only assistant turn always has content set (and an empty
+          // outfits array); an outfits turn always has content: null. See
+          // lib/chatHistory.ts's listChatMessages.
+          if (m.content !== null) {
+            return { id: m.id, role: "assistant-chat", content: m.content, sourceMessage: lastUserText };
           }
           return { id: m.id, role: "assistant", outfits: m.outfits ?? [], sourceMessage: lastUserText };
         });
@@ -200,23 +206,9 @@ export default function ChatPage() {
     });
   }
 
-  function handleModeChoice(mode: "conversation" | "swipe", label: string) {
-    if (chatMode !== null) return;
-    setChatMode(mode);
-    setMessages((prev) => [
-      ...prev,
-      { id: `mode-answer-${prev.length}`, role: "user", content: label },
-      { id: `ideas-question-${prev.length + 1}`, role: "assistant-note", content: "What ideas are you looking for?" },
-    ]);
-  }
-
   async function sendMessage(text: string) {
     setBanner(null);
-    // The conversation/swipe choice is only shown once, on a fresh chat. If
-    // the user starts typing instead of clicking a button, it defaults to
-    // conversation mode rather than staying unresolved.
-    const effectiveMode = chatMode ?? "conversation";
-    if (chatMode === null) setChatMode("conversation");
+    const effectiveMode = chatMode;
     setMessages((prev) => [
       ...prev,
       {
@@ -232,7 +224,7 @@ export default function ChatPage() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({ message: text, chatMode: effectiveMode }),
       });
 
       if (!res.ok || !res.body) {
@@ -273,6 +265,16 @@ export default function ChatPage() {
                 sourceMessage: text,
                 swipeState: effectiveMode === "swipe" ? { kept: [], discarded: [] } : undefined,
               },
+            ]);
+          } else if (event.type === "chat") {
+            settled = true;
+            setPending(null);
+            if (event.switchMode === "swipe") {
+              setChatMode("swipe");
+            }
+            setMessages((prev) => [
+              ...prev,
+              { id: `assistant-chat-${prev.length}`, role: "assistant-chat", content: event.message, sourceMessage: text },
             ]);
           } else if (event.type === "error") {
             settled = true;
@@ -330,24 +332,14 @@ export default function ChatPage() {
                   <div className="max-w-[85%] rounded-card border border-brass bg-butter px-4 py-3 font-body text-body text-espresso shadow-card">
                     {message.content}
                   </div>
-                  {message.choices && chatMode === null && (
-                    <div className="flex gap-2">
-                      {message.choices.map((choice) => (
-                        <button
-                          key={choice.mode}
-                          type="button"
-                          onClick={() => handleModeChoice(choice.mode, choice.label)}
-                          className={
-                            choice.mode === "swipe"
-                              ? "rounded-pill bg-amber px-4 py-2 font-utility text-utility uppercase text-espresso shadow-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
-                              : "rounded-pill border border-brass px-4 py-2 font-utility text-utility uppercase text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-deepPool"
-                          }
-                        >
-                          {choice.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                </div>
+              )}
+              {message.role === "assistant-chat" && (
+                <div className="flex flex-col gap-3">
+                  <Avatar src={assistantAvatarSrc} label="Outfit MC" />
+                  <div className="max-w-[85%] rounded-card border border-brass bg-butter px-4 py-3 font-body text-body text-espresso shadow-card">
+                    {message.content}
+                  </div>
                 </div>
               )}
               {message.role === "user" && (

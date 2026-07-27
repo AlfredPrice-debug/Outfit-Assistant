@@ -8,4 +8,5 @@ export type ChatStreamEvent =
   | { type: "retry" }
   | { type: "warning"; message: string }
   | { type: "result"; outfits: OutfitWithId[] }
+  | { type: "chat"; message: string; switchMode?: "swipe" }
   | { type: "error"; message: string };

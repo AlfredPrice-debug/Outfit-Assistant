@@ -3,10 +3,17 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getOwnerId } from "@/lib/owner";
 import { getActiveConversationId } from "@/lib/conversation";
-import { generateOutfits, type ClosetContextItem } from "@/lib/gemini";
-import { encodeAssistantContent, getRecentHistory, listChatMessages } from "@/lib/chatHistory";
+import { generateReply, type ClosetContextItem } from "@/lib/gemini";
+import {
+  encodeAssistantContent,
+  encodeAssistantChat,
+  getRecentHistory,
+  countRecentFollowUps,
+  listChatMessages,
+} from "@/lib/chatHistory";
+import { getUserSettings, DEFAULT_USER_SETTINGS } from "@/lib/userSettings";
 import type { ChatStreamEvent } from "@/lib/streamEvents";
-import type { ClosetCategory } from "@/lib/schemas";
+import { chatModeSchema, type ClosetCategory } from "@/lib/schemas";
 import {
   GeminiConfigError,
   GeminiRateLimitError,
@@ -20,6 +27,7 @@ export const runtime = "nodejs";
 
 const requestSchema = z.object({
   message: z.string().trim().min(1).max(2000),
+  chatMode: chatModeSchema.default("conversation"),
 });
 
 export async function GET() {
@@ -40,7 +48,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Message is required." }, { status: 400 });
   }
-  const { message } = parsed.data;
+  const { message, chatMode } = parsed.data;
   const userId = await getOwnerId();
 
   // History is read before the new user message is written so it never
@@ -48,12 +56,22 @@ export async function POST(req: NextRequest) {
   let history: Awaited<ReturnType<typeof getRecentHistory>> = [];
   let dbAvailable = true;
   let conversationId = "";
+  let followUpsSoFar = 0;
   try {
     conversationId = await getActiveConversationId();
     history = await getRecentHistory();
+    if (chatMode === "conversation") {
+      followUpsSoFar = await countRecentFollowUps();
+    }
   } catch {
     dbAvailable = false;
   }
+
+  // Best-effort: a settings lookup failing shouldn't block generation, it
+  // just means this request falls back to the same defaults a fresh user
+  // would get.
+  const settings = await getUserSettings().catch(() => DEFAULT_USER_SETTINGS);
+  const remainingFollowUps = Math.max(0, settings.chatFollowUpCount - followUpsSoFar);
 
   // Best-effort: a closet lookup failing shouldn't block generation, it just
   // means this request's suggestions won't reference anything the user owns.
@@ -92,16 +110,34 @@ export async function POST(req: NextRequest) {
       }
 
       try {
-        const { finalResponse } = await generateOutfits(
+        const result = await generateReply({
+          mode: chatMode,
           history,
           message,
-          (evt) => {
+          onEvent: (evt) => {
             if (evt.type === "chunk") send({ type: "chunk", text: evt.text });
             if (evt.type === "retry") send({ type: "retry" });
           },
           closetItems,
-        );
+          outfitCount: settings.swipeCardCount,
+          remainingFollowUps,
+        });
 
+        if (result.kind === "chat") {
+          if (dbAvailable) {
+            try {
+              await prisma.chatMessage.create({
+                data: { userId, conversationId, role: "assistant", content: encodeAssistantChat(result.message) },
+              });
+            } catch {
+              send({ type: "warning", message: "This reply couldn't be saved because the database is unavailable." });
+            }
+          }
+          send({ type: "chat", message: result.message, switchMode: result.switchMode });
+          return;
+        }
+
+        const { finalResponse } = result;
         let outfitsWithIds: (typeof finalResponse.outfits[number] & { id: string; isSaved: boolean })[];
 
         if (dbAvailable) {

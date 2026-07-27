@@ -13,10 +13,15 @@ import {
   HistoryIcon,
   ShirtIcon,
   BookmarkIcon,
+  SettingsIcon,
   LogOutIcon,
 } from "lucide-react";
 
-export function Sidebar({ current }: { current: "chat" | "saved" | "profile" | "history" | "closet" }) {
+export function Sidebar({
+  current,
+}: {
+  current: "chat" | "saved" | "profile" | "history" | "closet" | "settings";
+}) {
   const [open, setOpen] = useState(false);
   const [startingNewChat, setStartingNewChat] = useState(false);
 
@@ -119,6 +124,11 @@ export function Sidebar({ current }: { current: "chat" | "saved" | "profile" | "
           <Link href="/history" onClick={() => setOpen(false)} className={linkClasses(current === "history")}>
             <HistoryIcon className="size-5" aria-hidden="true" />
             Chat history
+          </Link>
+
+          <Link href="/settings" onClick={() => setOpen(false)} className={linkClasses(current === "settings")}>
+            <SettingsIcon className="size-5" aria-hidden="true" />
+            Settings
           </Link>
 
           <button type="button" onClick={() => signOut()} className={linkClasses(false)}>

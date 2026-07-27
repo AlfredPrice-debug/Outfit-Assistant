@@ -7,7 +7,7 @@ import { Sidebar } from "./Sidebar";
 import { useUserAvatar } from "@/lib/client/useUserAvatar";
 import { getUserAvatar } from "@/lib/avatars";
 
-export function NavHeader({ current }: { current: "chat" | "saved" | "profile" | "history" | "closet" }) {
+export function NavHeader({ current }: { current: "chat" | "saved" | "profile" | "history" | "closet" | "settings" }) {
   const { key } = useUserAvatar();
 
   return (

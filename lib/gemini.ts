@@ -1,7 +1,9 @@
 import { GoogleGenAI, ApiError, type Content, type GroundingChunk } from "@google/genai";
 import {
-  modelResponseSchema,
   finalResponseSchema,
+  buildModelSwipeResponseSchema,
+  buildFinalSwipeResponseSchema,
+  modelConversationReplySchema,
   type FinalResponse,
   type InspirationLink,
   type ClosetCategory,
@@ -43,18 +45,22 @@ const CLOSET_CATEGORY_LABELS: Record<ClosetCategory, string> = {
   accessory: "Accessory",
 };
 
-// A JSON contract without inspirationLinks: the model is never asked for
-// URLs, so it can never be the source of a fabricated one. Real links are
-// spliced in afterward from Google Search grounding metadata.
-const BASE_SYSTEM_INSTRUCTION = `You are Outfit MC, the friend with genuinely great taste who always has a specific idea, never a vague one. Turn a short request (an occasion, season, or vibe) into three concrete, wearable outfit ideas built from pieces the user likely already owns. Write like you're texting a friend real advice, not describing a catalog listing: confident, a little playful, zero hedging.
+// Shared persona line, reused by both modes' instructions so a mode switch
+// mid-conversation doesn't come with a voice change.
+const PERSONA_INTRO = `You are Outfit MC, the friend with genuinely great taste who always has a specific idea, never a vague one. Write like you're texting a friend real advice, not describing a catalog listing: confident, a little playful, zero hedging.`;
 
-Use Google Search to ground your suggestions in current, real fashion context.
+// Shape/quality rules for an individual outfit, shared by both modes since
+// swipe's outfitCount and conversation's fixed 3 both produce this same
+// per-outfit shape. Deliberately doesn't reference a specific count; each
+// caller states its own "always exactly N" rule separately.
+const OUTFIT_SHAPE_RULES = `- Describe garments generically (e.g. "white linen button-down", "cropped wide-leg jeans"). Never name a brand or retailer.
+- Titles are punchy, 2 to 4 words, never a full sentence.
+- Every rationale must point to something specific and concrete about this occasion or vibe (a texture, a color pairing, a practical detail that matters here). Never write a line that could be pasted under any other outfit unchanged; that's a sign it's too generic. Avoid stock filler like "this balances comfort and style."
+- Each outfit must take a genuinely different angle from the others in the same response, not a palette swap of the same idea. Don't open two rationales with the same sentence structure.
+- Do not include an "inspirationLinks" field; that is attached separately.
+- "colorStory" has 3 to 5 entries, one per significant garment color in that outfit. Every "hex" must be a valid 6-digit hex code, and every entry must correspond to a color actually named or implied by that outfit's item descriptions. Never invent a color that doesn't appear in the outfit.`;
 
-Respond with ONLY a single JSON object, no markdown code fences, no commentary before or after it, matching exactly this shape:
-
-{
-  "outfits": [
-    {
+const OUTFIT_JSON_SHAPE = `{
       "title": "short name for the look",
       "occasion": "restated occasion",
       "season": "season or weather assumption",
@@ -69,20 +75,7 @@ Respond with ONLY a single JSON object, no markdown code fences, no commentary b
       "colorStory": [
         { "name": "short color name, e.g. sand", "hex": "#D9C7A3" }
       ]
-    }
-  ]
-}
-
-Rules:
-- Always return exactly 3 outfits in the array.
-- Describe garments generically (e.g. "white linen button-down", "cropped wide-leg jeans"). Never name a brand or retailer.
-- Titles are punchy, 2 to 4 words, never a full sentence.
-- Every rationale must point to something specific and concrete about this occasion or vibe (a texture, a color pairing, a practical detail that matters here). Never write a line that could be pasted under any other outfit unchanged; that's a sign it's too generic. Avoid stock filler like "this balances comfort and style."
-- The three outfits must take genuinely different angles on the request, not palette swaps of the same idea. Don't open two rationales with the same sentence structure.
-- Do not include an "inspirationLinks" field; that is attached separately.
-- "colorStory" has 3 to 5 entries, one per significant garment color in that outfit. Every "hex" must be a valid 6-digit hex code, and every entry must correspond to a color actually named or implied by that outfit's item descriptions. Never invent a color that doesn't appear in the outfit.
-- Do not wrap the JSON in markdown fences or add any surrounding text.
-- Never use an em dash (—) anywhere in your response. Use a comma, period, or parentheses instead.`;
+    }`;
 
 // Appended only when the user has actually logged something, so a closet-less
 // request looks exactly like it did before this feature existed.
@@ -99,12 +92,76 @@ ${lines}
 When one of these genuinely fits the look, reuse it directly by name in "itemsByLayer" or "accessories" instead of inventing a similar new piece. Still suggest new pieces from anywhere else to complete each outfit; don't force an owned item in if it doesn't fit, and don't limit every outfit to only what's listed here.`;
 }
 
-function buildSystemInstruction(closetItems: ClosetContextItem[]): string {
-  return `${BASE_SYSTEM_INSTRUCTION}${buildClosetSection(closetItems)}`;
+// Swipe mode: unchanged behavior from before this feature, except the
+// outfit count is now the user's own setting instead of a hardcoded 3.
+function buildSwipeSystemInstruction(outfitCount: number, closetItems: ClosetContextItem[]): string {
+  return `${PERSONA_INTRO} Turn a short request (an occasion, season, or vibe) into ${outfitCount} concrete, wearable outfit ideas built from pieces the user likely already owns.
+
+Use Google Search to ground your suggestions in current, real fashion context.
+
+Respond with ONLY a single JSON object, no markdown code fences, no commentary before or after it, matching exactly this shape:
+
+{
+  "outfits": [
+    ${OUTFIT_JSON_SHAPE}
+  ]
 }
 
-function buildRetrySystemInstruction(closetItems: ClosetContextItem[]): string {
-  return `${buildSystemInstruction(closetItems)}
+Rules:
+- Always return exactly ${outfitCount} outfits in the array.
+${OUTFIT_SHAPE_RULES}
+- Do not wrap the JSON in markdown fences or add any surrounding text.
+- Never use an em dash (—) anywhere in your response. Use a comma, period, or parentheses instead.${buildClosetSection(closetItems)}`;
+}
+
+// Conversation mode: lets Outfit MC actually chat, only producing outfits
+// once she judges the request is ready. remainingFollowUps is the user's
+// configured cap minus how many chat-only turns have already happened in
+// this exchange; once it hits 0, she's instructed to generate regardless,
+// so this can never turn into an unbounded back-and-forth.
+function buildConversationSystemInstruction(remainingFollowUps: number, closetItems: ClosetContextItem[]): string {
+  const followUpRule =
+    remainingFollowUps > 0
+      ? `You have at most ${remainingFollowUps} more "chat" turn(s) before you must switch to "outfits" on your next reply regardless of how the conversation is going, so don't spend them on small talk that doesn't move toward a real recommendation.`
+      : `You must respond with "outfits" this turn. Do not reply with "chat" again; generate the best 3 outfits you can with whatever you know so far.`;
+
+  return `${PERSONA_INTRO} Have a real back-and-forth with the user about what they need, then turn it into 3 concrete, wearable outfit ideas built from pieces they likely already own.
+
+Use Google Search to ground your suggestions and your conversation in current, real fashion context.
+
+Respond with ONLY a single JSON object, no markdown code fences, no commentary before or after it, matching exactly ONE of these two shapes:
+
+1. Still chatting, not ready to generate outfits yet:
+{
+  "kind": "chat",
+  "message": "your reply, in character, as plain text"
+}
+
+2. Ready to generate 3 concrete outfits:
+{
+  "kind": "outfits",
+  "outfits": [
+    ${OUTFIT_JSON_SHAPE}
+  ]
+}
+
+When to use which:
+- Use "chat" while the request is still vague, or there's a natural question worth asking (occasion specifics, weather, vibe, what they already have in mind), or the user just wants to talk something through. Ask real questions, react to what they say, riff on ideas. Don't rush to outfits just because you technically could.
+- Use "outfits" once the request is concrete enough to actually build 3 real looks, or the user has clearly asked for actual suggestions.
+- ${followUpRule}
+- If the user's message is asking to switch to swiping through cards instead of talking (e.g. "let's swipe", "can we do cards instead"), reply with "chat", a short in-character acknowledgment, and include "switchMode": "swipe" in the same object. Only include "switchMode" when you've detected exactly this request.
+
+Rules for the "outfits" case:
+- Always return exactly 3 outfits in the array.
+${OUTFIT_SHAPE_RULES}
+
+Rules for both cases:
+- Do not wrap the JSON in markdown fences or add any surrounding text.
+- Never use an em dash (—) anywhere in your response. Use a comma, period, or parentheses instead.${buildClosetSection(closetItems)}`;
+}
+
+function buildRetrySystemInstruction(baseInstruction: string): string {
+  return `${baseInstruction}
 
 Your previous response failed validation. This time, output ONLY the raw JSON object described above. No markdown fences, no leading or trailing text, no explanation. The entire response body must be valid JSON.`;
 }
@@ -181,10 +238,9 @@ function distributeLinks(links: InspirationLink[], outfitCount: number): Inspira
   return result;
 }
 
-export interface GenerateOutfitsResult {
-  finalResponse: FinalResponse;
-  fullText: string;
-}
+export type GenerateReplyResult =
+  | { kind: "outfits"; finalResponse: FinalResponse; fullText: string }
+  | { kind: "chat"; message: string; switchMode?: "swipe"; fullText: string };
 
 export type GenerationEvent =
   | { type: "chunk"; text: string }
@@ -256,12 +312,31 @@ async function callGeminiOnce(
   }
 }
 
-export async function generateOutfits(
-  history: ChatTurn[],
-  message: string,
-  onEvent: (event: GenerationEvent) => void,
-  closetItems: ClosetContextItem[] = [],
-): Promise<GenerateOutfitsResult> {
+export interface GenerateReplyParams {
+  mode: "swipe" | "conversation";
+  history: ChatTurn[];
+  message: string;
+  onEvent: (event: GenerationEvent) => void;
+  closetItems?: ClosetContextItem[];
+  // Swipe mode only: how many outfits to generate (the user's own setting).
+  outfitCount?: number;
+  // Conversation mode only: how many more chat-only turns are allowed before
+  // she must generate outfits regardless (the user's setting minus however
+  // many chat-only turns already happened in this exchange).
+  remainingFollowUps?: number;
+}
+
+export async function generateReply(params: GenerateReplyParams): Promise<GenerateReplyResult> {
+  const {
+    mode,
+    history,
+    message,
+    onEvent,
+    closetItems = [],
+    outfitCount = 5,
+    remainingFollowUps = 0,
+  } = params;
+
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new GeminiConfigError("GEMINI_API_KEY is not set on the server.");
@@ -270,23 +345,40 @@ export async function generateOutfits(
   const ai = new GoogleGenAI({ apiKey });
   const contents = toContents(history, message);
 
-  const attempt = async (systemInstruction: string) => {
+  const baseInstruction =
+    mode === "swipe"
+      ? buildSwipeSystemInstruction(outfitCount, closetItems)
+      : buildConversationSystemInstruction(remainingFollowUps, closetItems);
+
+  const attempt = async (systemInstruction: string): Promise<GenerateReplyResult> => {
     const onChunk = (text: string) => onEvent({ type: "chunk", text });
     const { fullText, groundingChunks } = await callGeminiOnce(ai, contents, systemInstruction, onChunk);
-    const parsed = modelResponseSchema.parse(extractJson(fullText));
+    const rawJson = extractJson(fullText);
+
+    if (mode === "swipe") {
+      const parsed = buildModelSwipeResponseSchema(outfitCount).parse(rawJson);
+      const links = dedupeLinks(groundingChunks);
+      const distributed = distributeLinks(links, parsed.outfits.length);
+      const finalResponse = buildFinalSwipeResponseSchema(outfitCount).parse({
+        outfits: parsed.outfits.map((outfit, i) => ({ ...outfit, inspirationLinks: distributed[i] ?? [] })),
+      });
+      return { kind: "outfits", finalResponse, fullText };
+    }
+
+    const parsed = modelConversationReplySchema.parse(rawJson);
+    if (parsed.kind === "chat") {
+      return { kind: "chat", message: parsed.message, switchMode: parsed.switchMode, fullText };
+    }
     const links = dedupeLinks(groundingChunks);
     const distributed = distributeLinks(links, parsed.outfits.length);
-    const withLinks = {
-      outfits: parsed.outfits.map((outfit, i) => ({
-        ...outfit,
-        inspirationLinks: distributed[i] ?? [],
-      })),
-    };
-    return { finalResponse: finalResponseSchema.parse(withLinks), fullText };
+    const finalResponse = finalResponseSchema.parse({
+      outfits: parsed.outfits.map((outfit, i) => ({ ...outfit, inspirationLinks: distributed[i] ?? [] })),
+    });
+    return { kind: "outfits", finalResponse, fullText };
   };
 
   try {
-    return await attempt(buildSystemInstruction(closetItems));
+    return await attempt(baseInstruction);
   } catch (err) {
     if (
       err instanceof GeminiConfigError ||
@@ -299,7 +391,7 @@ export async function generateOutfits(
     // Retry once with a stricter instruction before giving up.
     onEvent({ type: "retry" });
     try {
-      return await attempt(buildRetrySystemInstruction(closetItems));
+      return await attempt(buildRetrySystemInstruction(baseInstruction));
     } catch {
       throw new GeminiMalformedOutputError();
     }

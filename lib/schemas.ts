@@ -56,6 +56,53 @@ export type InspirationLink = z.infer<typeof inspirationLinkSchema>;
 export type FinalOutfit = z.infer<typeof finalOutfitSchema>;
 export type FinalResponse = z.infer<typeof finalResponseSchema>;
 
+// Swipe mode's outfit count is a per-user setting (2-5), so its response
+// schema is built per-request rather than fixed like modelResponseSchema
+// above (which conversation mode's eventual outfit generation still uses,
+// always exactly 3, unaffected by this setting).
+export function buildModelSwipeResponseSchema(outfitCount: number) {
+  return z.object({ outfits: z.array(modelOutfitSchema).length(outfitCount) });
+}
+export function buildFinalSwipeResponseSchema(outfitCount: number) {
+  return z.object({ outfits: z.array(finalOutfitSchema).length(outfitCount) });
+}
+
+// Conversation mode can reply with either a chat-only message (no outfits
+// yet) or a finished set of exactly 3 outfits, same shape and count as
+// today's response. switchMode lets Outfit MC signal she detected a request
+// to switch to swipe mode; only that direction is supported (swipe mode has
+// no chat-kind reply to signal the reverse).
+export const chatReplySchema = z.object({
+  kind: z.literal("chat"),
+  message: z.string().min(1),
+  switchMode: z.enum(["swipe"]).optional(),
+});
+
+// The final ("outfits") branch reuses finalResponseSchema directly once
+// links are spliced in (lib/gemini.ts), rather than needing its own tagged
+// variant, since it's always the same plain {outfits: [...]} shape the rest
+// of the app already expects.
+export const modelConversationReplySchema = z.discriminatedUnion("kind", [
+  chatReplySchema,
+  z.object({ kind: z.literal("outfits"), outfits: z.array(modelOutfitSchema).length(3) }),
+]);
+
+export type ChatReply = z.infer<typeof chatReplySchema>;
+export type ModelConversationReply = z.infer<typeof modelConversationReplySchema>;
+
+// Settings page preferences (lib/userSettings.ts). Bounds match the four/five
+// selectable options the UI offers; nothing outside these is ever valid.
+export const chatModeSchema = z.enum(["conversation", "swipe"]);
+
+export const userSettingsInputSchema = z.object({
+  preferredChatMode: chatModeSchema,
+  swipeCardCount: z.number().int().min(2).max(5),
+  chatFollowUpCount: z.number().int().min(1).max(5),
+});
+
+export type ChatMode = z.infer<typeof chatModeSchema>;
+export type UserSettingsInput = z.infer<typeof userSettingsInputSchema>;
+
 // What you log on the "My closet" section of the profile page. A fixed
 // category set (rather than free text) matches the layers outfits are
 // already organized by, so a future closet-aware prompt (see README's
