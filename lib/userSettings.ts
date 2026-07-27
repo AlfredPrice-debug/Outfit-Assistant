@@ -7,8 +7,8 @@ import type { UserSettingsInput } from "./schemas";
 // values explicitly.
 export const DEFAULT_USER_SETTINGS: UserSettingsInput = {
   preferredChatMode: "conversation",
-  swipeCardCount: 5,
-  chatFollowUpCount: 5,
+  swipeCardCount: 3,
+  chatFollowUpCount: 3,
 };
 
 // No row is created just by reading; a row only exists once the user has

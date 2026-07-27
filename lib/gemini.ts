@@ -333,7 +333,7 @@ export async function generateReply(params: GenerateReplyParams): Promise<Genera
     message,
     onEvent,
     closetItems = [],
-    outfitCount = 5,
+    outfitCount = 3,
     remainingFollowUps = 0,
   } = params;
 

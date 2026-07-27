@@ -142,7 +142,7 @@ model ClosetItem {
 model UserSettings {
   userId            String   @id
   preferredChatMode String   @default("conversation")
-  swipeCardCount    Int      @default(5)
-  chatFollowUpCount Int      @default(5)
+  swipeCardCount    Int      @default(3)
+  chatFollowUpCount Int      @default(3)
   updatedAt         DateTime @updatedAt
 }
