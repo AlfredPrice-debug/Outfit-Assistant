@@ -45,10 +45,6 @@ function DraggableOutfitPreview({
         if (info.offset.x > SWIPE_THRESHOLD) onDecide("right");
         else if (info.offset.x < -SWIPE_THRESHOLD) onDecide("left");
       }}
-      // Fires only for a genuine tap (framer-motion distinguishes this from
-      // the drag gesture above by movement distance), so swiping never
-      // accidentally opens the detail view.
-      onTap={onOpenDetail}
       initial={{ scale: 0.95, y: 12, opacity: 0 }}
       animate={
         exitDirection
@@ -69,7 +65,7 @@ function DraggableOutfitPreview({
       // handler instead.
       className="absolute inset-0 z-10 !touch-none cursor-grab active:cursor-grabbing"
     >
-      <OutfitPreviewCard outfit={outfit} />
+      <OutfitPreviewCard outfit={outfit} onOpenDetail={onOpenDetail} />
       <motion.span
         style={{ opacity: keepOpacity }}
         className="pointer-events-none absolute right-4 top-4 rounded-pill bg-amber px-3 py-1 font-utility text-utility uppercase text-espresso shadow-card"
@@ -86,7 +82,15 @@ function DraggableOutfitPreview({
   );
 }
 
-function OutfitPreviewCard({ outfit }: { outfit: OutfitWithId }) {
+function OutfitPreviewCard({
+  outfit,
+  onOpenDetail,
+}: {
+  outfit: OutfitWithId;
+  // Undefined for the non-interactive background card in the stack, which
+  // renders the hint as plain text instead of a button.
+  onOpenDetail?: () => void;
+}) {
   const layerEntries = (["top", "bottom", "outerwear", "shoes"] as const)
     .map((key) => [key, outfit.itemsByLayer[key]] as const)
     .filter(([, value]) => value !== null && value !== undefined);
@@ -131,9 +135,23 @@ function OutfitPreviewCard({ outfit }: { outfit: OutfitWithId }) {
         </dl>
         <p className="line-clamp-3 font-body text-small">{outfit.rationale}</p>
       </div>
-      <p className="shrink-0 px-4 pb-3 text-right font-utility text-utility uppercase opacity-70">
-        Tap for details
-      </p>
+      {onOpenDetail ? (
+        <button
+          type="button"
+          onClick={onOpenDetail}
+          // Stops the parent draggable's own pointer handling from treating
+          // this press as the start of a swipe, so a tap here always reaches
+          // this button's click instead of ever being read as a card drag.
+          onPointerDownCapture={(e) => e.stopPropagation()}
+          className="shrink-0 px-4 pb-3 text-right font-utility text-utility uppercase underline underline-offset-2 opacity-70"
+        >
+          Tap for details
+        </button>
+      ) : (
+        <p className="shrink-0 px-4 pb-3 text-right font-utility text-utility uppercase opacity-70">
+          Tap for details
+        </p>
+      )}
     </article>
   );
 }

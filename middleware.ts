@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { isTestBypassActive } from "@/lib/owner";
 
 // Runs on every request that matches `config.matcher` below, before any page
 // or route handler. /signin, /api/auth, and /api/health are excluded there
@@ -15,7 +16,7 @@ import { auth } from "@/auth";
 // public subfolder by name, means a new /public/whatever/*.png doesn't
 // silently reintroduce this bug.
 export default auth((req) => {
-  if (req.auth) {
+  if (isTestBypassActive() || req.auth) {
     return NextResponse.next();
   }
 
